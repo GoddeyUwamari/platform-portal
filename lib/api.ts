@@ -62,3 +62,15 @@ export const handleApiResponse = <T>(response: { data: ApiResponse<T> }): T => {
   }
   return response.data.data;
 };
+
+// Helper function to get data from API
+export const fetchData = async <T>(url: string): Promise<T> => {
+  const response = await api.get<T>(url);
+  return response.data;
+};
+
+// Helper function to post data to API
+export const postData = async <T, D = any>(url: string, data: D): Promise<T> => {
+  const response = await api.post<T>(url, data);
+  return response.data;
+};

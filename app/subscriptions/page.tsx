@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import api from '@/lib/api'
 
 // Types
 interface Subscription {
@@ -40,15 +41,6 @@ interface Subscription {
 
 type StatusFilter = 'all' | 'active' | 'cancelled' | 'past_due'
 
-// API function
-const fetchSubscriptions = async (status: StatusFilter): Promise<Subscription[]> => {
-  const params = new URLSearchParams()
-  if (status !== 'all') params.append('status', status)
-
-  const response = await fetch(`/api/billing/subscriptions?${params.toString()}`)
-  if (!response.ok) throw new Error('Failed to fetch subscriptions')
-  return response.json()
-}
 
 // Loading Skeleton Component
 function TableSkeleton() {
@@ -137,16 +129,14 @@ export default function SubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   // Fetch subscriptions with status filter
-  const {
-    data: subscriptions,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<Subscription[]>({
+  const { data: subscriptions, isLoading, error, refetch } = useQuery({
     queryKey: ['subscriptions', statusFilter],
-    queryFn: () => fetchSubscriptions(statusFilter),
-    retry: 1,
-  })
+    queryFn: async () => {
+      const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+      const response = await api.get(`/api/billing/subscriptions${params}`);
+      return response.data;
+    },
+  });
 
   // Status badge helper
   const getStatusBadge = (status: Subscription['status']) => {

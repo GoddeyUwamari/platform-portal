@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, FileText, MoreVertical, Download, Eye } from 'lucide-react'
+import api from '@/lib/api'
 
 interface Invoice {
   id: string
@@ -42,21 +43,14 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
 
   // Fetch invoices using React Query
-  const { data: invoices, isLoading, error, refetch } = useQuery<Invoice[]>({
+  const { data: invoices, isLoading, error, refetch } = useQuery({
     queryKey: ['invoices', statusFilter],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter)
-      }
-      const response = await fetch(`/api/billing/invoices?${params.toString()}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch invoices')
-      }
-      return response.json()
+      const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+      const response = await api.get(`/api/billing/invoices${params}`);
+      return response.data;
     },
-    retry: 1,
-  })
+  });
 
   // Format currency
   const formatCurrency = (amount: number) => {

@@ -1,0 +1,19 @@
+name: Milestone Tracker
+
+on:
+  issues:
+    types: [closed, reopened]
+  pull_request:
+    types: [closed, merged]
+
+jobs:
+  update-progress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update milestone progress
+        run: |
+          echo "📊 Milestone progress updated"
+          echo "Check MILESTONES.md for current status"

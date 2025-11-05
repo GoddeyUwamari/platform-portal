@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import api from '@/lib/api'
 
 // Mock data for development
 const mockRevenueData = Array.from({ length: 30 }, (_, i) => ({
@@ -35,18 +36,6 @@ interface Invoice {
   date: string
 }
 
-// API functions
-const fetchBillingStats = async (): Promise<BillingStats> => {
-  const response = await fetch('/api/billing/stats')
-  if (!response.ok) throw new Error('Failed to fetch billing stats')
-  return response.json()
-}
-
-const fetchRecentInvoices = async (): Promise<Invoice[]> => {
-  const response = await fetch('/api/billing/invoices?limit=5')
-  if (!response.ok) throw new Error('Failed to fetch invoices')
-  return response.json()
-}
 
 // Metric Card Component
 function MetricCard({
@@ -173,29 +162,23 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export default function DashboardPage() {
-  // Fetch billing stats
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    error: statsError,
-    refetch: refetchStats,
-  } = useQuery<BillingStats>({
-    queryKey: ['billing-stats'],
-    queryFn: fetchBillingStats,
-    retry: 1,
-  })
+  // Fetch dashboard stats from real API
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const response = await api.get('/api/billing/stats');
+      return response.data;
+    },
+  });
 
-  // Fetch recent invoices
-  const {
-    data: invoices,
-    isLoading: invoicesLoading,
-    error: invoicesError,
-    refetch: refetchInvoices,
-  } = useQuery<Invoice[]>({
+  // Fetch recent invoices from real API
+  const { data: invoices, isLoading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useQuery({
     queryKey: ['recent-invoices'],
-    queryFn: fetchRecentInvoices,
-    retry: 1,
-  })
+    queryFn: async () => {
+      const response = await api.get('/api/billing/invoices?limit=5');
+      return response.data;
+    },
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

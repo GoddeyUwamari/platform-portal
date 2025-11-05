@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import api from '@/lib/api'
 
 // Types
 interface Tenant {
@@ -32,15 +33,6 @@ interface Tenant {
   createdAt: string
 }
 
-// API function
-const fetchTenants = async (search: string): Promise<Tenant[]> => {
-  const params = new URLSearchParams()
-  if (search) params.append('search', search)
-
-  const response = await fetch(`/api/auth/tenants?${params.toString()}`)
-  if (!response.ok) throw new Error('Failed to fetch tenants')
-  return response.json()
-}
 
 // Loading Skeleton Component
 function TableSkeleton() {
@@ -165,16 +157,14 @@ export default function TenantsPage() {
   const itemsPerPage = 10
 
   // Fetch tenants with debounced search
-  const {
-    data: tenants,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<Tenant[]>({
+  const { data: tenants, isLoading, error, refetch } = useQuery({
     queryKey: ['tenants', debouncedSearch],
-    queryFn: () => fetchTenants(debouncedSearch),
-    retry: 1,
-  })
+    queryFn: async () => {
+      const params = debouncedSearch ? `?search=${debouncedSearch}` : '';
+      const response = await api.get(`/api/auth/tenants${params}`);
+      return response.data;
+    },
+  });
 
   // Status badge helper
   const getStatusBadge = (status: Tenant['status']) => {
