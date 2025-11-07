@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
@@ -21,10 +22,27 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user, logout } = useAuth()
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log('Logging out...')
+    logout()
+  }
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    const firstInitial = user.firstName?.charAt(0) || user.email.charAt(0)
+    const lastInitial = user.lastName?.charAt(0) || ''
+    return (firstInitial + lastInitial).toUpperCase()
+  }
+
+  // Get user display name
+  const getUserName = () => {
+    if (!user) return 'User'
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`
+    }
+    return user.email
   }
 
   return (
@@ -66,12 +84,12 @@ export function Sidebar() {
               <Avatar className="w-8 h-8">
                 <AvatarImage src="/avatar.png" alt="User" />
                 <AvatarFallback className="bg-[#635BFF] text-white text-sm">
-                  JD
+                  {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-white">John Doe</p>
-                <p className="text-xs text-gray-400">john@example.com</p>
+                <p className="text-sm font-medium text-white">{getUserName()}</p>
+                <p className="text-xs text-gray-400">{user?.email || ''}</p>
               </div>
             </button>
           </DropdownMenuTrigger>

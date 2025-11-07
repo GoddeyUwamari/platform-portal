@@ -42,13 +42,18 @@ export const useAuth = create<AuthState>((set, get) => ({
       const response = await api.post<AuthResponse>('/api/auth/login', {
         email,
         password,
+      }, {
+        headers: {
+          'X-Tenant-ID': '00000000-0000-0000-0000-000000000001',
+        },
       });
 
-      const { user, accessToken, refreshToken } = response.data;
+      // Backend returns { success: true, data: { user, accessToken, expiresIn, sessionId }, message, timestamp }
+      const { user, accessToken, sessionId } = response.data.data;
 
-      // Store tokens and user in localStorage
+      // Store tokens, sessionId, and user in localStorage
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('sessionId', sessionId);
       localStorage.setItem('user', JSON.stringify(user));
 
       set({ user, isAuthenticated: true, isLoading: false });
@@ -61,7 +66,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   logout: () => {
     // Clear tokens and user from localStorage
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('sessionId');
     localStorage.removeItem('user');
 
     set({ user: null, isAuthenticated: false });

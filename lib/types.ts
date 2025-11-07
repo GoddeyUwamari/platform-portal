@@ -3,13 +3,21 @@ export interface User {
   email: string;
   tenantId: string;
   role: string;
+  firstName?: string;
+  lastName?: string;
   createdAt: string;
 }
 
 export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  success: boolean;
+  data: {
+    user: User;
+    accessToken: string;
+    expiresIn: number;
+    sessionId: string;
+  };
+  message: string;
+  timestamp: string;
 }
 
 export interface Tenant {
@@ -23,11 +31,12 @@ export interface Tenant {
 export interface Subscription {
   id: string;
   tenantId: string;
+  tenantName: string;
   planId: string;
-  planName: string;
+  plan: string;
   status: string;
   currentPeriodStart: string;
-  currentPeriodEnd: string;
+  nextBillingDate: string;
   amount: number;
   currency: string;
 }
@@ -35,6 +44,7 @@ export interface Subscription {
 export interface Invoice {
   id: string;
   tenantId: string;
+  tenantName: string;
   subscriptionId: string;
   amount: number;
   currency: string;
@@ -45,9 +55,13 @@ export interface Invoice {
 
 export interface DashboardStats {
   totalRevenue: number;
+  revenueChange: number;
   activeSubscriptions: number;
+  subscriptionsChange: number;
   totalInvoices: number;
+  invoicesChange: number;
   activeTenants: number;
+  tenantsChange: number;
 }
 
 export interface ApiResponse<T> {

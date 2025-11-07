@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/hooks/useAuth'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -19,6 +20,7 @@ const pageTitles: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname()
+  const { user, logout } = useAuth()
 
   // Get the page title based on the current route
   const getPageTitle = () => {
@@ -38,8 +40,15 @@ export function Header() {
   }
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log('Logging out...')
+    logout()
+  }
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    const firstInitial = user.firstName?.charAt(0) || user.email.charAt(0)
+    const lastInitial = user.lastName?.charAt(0) || ''
+    return (firstInitial + lastInitial).toUpperCase()
   }
 
   return (
@@ -55,7 +64,7 @@ export function Header() {
               <Avatar className="w-9 h-9">
                 <AvatarImage src="/avatar.png" alt="User" />
                 <AvatarFallback className="bg-[#635BFF] text-white text-sm">
-                  JD
+                  {getUserInitials()}
                 </AvatarFallback>
               </Avatar>
             </button>

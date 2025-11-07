@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  // Temporarily disabled for testing UI
+  return NextResponse.next();
+
+  /* Original middleware logic - commented out for testing
   const { pathname } = request.nextUrl;
 
   // Define protected routes
@@ -41,6 +45,7 @@ export function middleware(request: NextRequest) {
   }
 
   return NextResponse.next();
+  */
 }
 
 export const config = {

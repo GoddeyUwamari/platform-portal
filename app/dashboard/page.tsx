@@ -238,7 +238,7 @@ export default function DashboardPage() {
           />
           <MetricCard
             title="Pending Invoices"
-            value={stats?.pendingInvoices ?? 0}
+            value={stats?.totalInvoices ?? 0}
             change={stats?.invoicesChange ?? 0}
             icon={FileText}
             loading={statsLoading}
@@ -349,11 +349,11 @@ export default function DashboardPage() {
                     <TableCell className="font-mono text-xs">
                       {invoice.id}
                     </TableCell>
-                    <TableCell className="font-medium">{invoice.tenant}</TableCell>
+                    <TableCell className="font-medium">{invoice.tenantName}</TableCell>
                     <TableCell>{formatCurrency(invoice.amount)}</TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(invoice.date).toLocaleDateString('en-US', {
+                      {new Date(invoice.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',

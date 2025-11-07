@@ -8,13 +8,28 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - add Bearer token from localStorage
+// Request interceptor - add Bearer token and X-Tenant-ID from localStorage
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken');
+    const userStr = localStorage.getItem('user');
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add X-Tenant-ID header from user object
+    if (userStr && config.headers) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.tenantId) {
+          config.headers['X-Tenant-ID'] = user.tenantId;
+        }
+      } catch (error) {
+        console.error('Failed to parse user from localStorage:', error);
+      }
+    }
+
     return config;
   },
   (error: AxiosError) => {
@@ -34,7 +49,7 @@ api.interceptors.response.use(
       // Handle 401 Unauthorized - clear auth and redirect to login
       if (status === 401) {
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('sessionId');
         localStorage.removeItem('user');
 
         // Only redirect if not already on login page
