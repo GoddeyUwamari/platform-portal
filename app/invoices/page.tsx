@@ -43,12 +43,12 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
 
   // Fetch invoices using React Query
-  const { data: invoices, isLoading, error, refetch } = useQuery({
+  const { data: invoices = [], isLoading, error, refetch } = useQuery({
     queryKey: ['invoices', statusFilter],
     queryFn: async () => {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
       const response = await api.get(`/api/billing/invoices${params}`);
-      return response.data;
+      return response.data.data || [];
     },
   });
 

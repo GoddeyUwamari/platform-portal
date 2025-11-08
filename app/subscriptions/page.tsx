@@ -129,12 +129,12 @@ export default function SubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   // Fetch subscriptions with status filter
-  const { data: subscriptions, isLoading, error, refetch } = useQuery({
+  const { data: subscriptions = [], isLoading, error, refetch } = useQuery({
     queryKey: ['subscriptions', statusFilter],
     queryFn: async () => {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
       const response = await api.get(`/api/billing/subscriptions${params}`);
-      return response.data;
+      return response.data.data || [];
     },
   });
 

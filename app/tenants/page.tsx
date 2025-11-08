@@ -157,14 +157,15 @@ export default function TenantsPage() {
   const itemsPerPage = 10
 
   // Fetch tenants with debounced search
-  const { data: tenants, isLoading, error, refetch } = useQuery({
-    queryKey: ['tenants', debouncedSearch],
-    queryFn: async () => {
-      const params = debouncedSearch ? `?search=${debouncedSearch}` : '';
-      const response = await api.get(`/api/auth/tenants${params}`);
-      return response.data;
-    },
-  });
+  const { data: tenants = [], isLoading, error, refetch } = useQuery<Tenant[]>({
+  queryKey: ['tenants', debouncedSearch],
+  queryFn: async () => {
+    const response = await api.get('/api/auth/tenants', {
+      params: { search: debouncedSearch || undefined }
+    });
+    return response.data.data || [];  // ✅ Fixed
+  }
+});
 
   // Status badge helper
   const getStatusBadge = (status: Tenant['status']) => {
@@ -190,10 +191,10 @@ export default function TenantsPage() {
   }
 
   // Pagination calculations
-  const paginatedTenants = tenants?.slice(
+  const paginatedTenants = (tenants || []).slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
-  )
+  );
   const totalPages = Math.ceil((tenants?.length ?? 0) / itemsPerPage)
 
   // Reset to page 1 when search changes

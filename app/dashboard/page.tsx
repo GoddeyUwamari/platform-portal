@@ -22,7 +22,7 @@ interface BillingStats {
   revenueChange: number
   activeSubscriptions: number
   subscriptionsChange: number
-  pendingInvoices: number
+  totalInvoices: number  // Changed from pendingInvoices
   invoicesChange: number
   activeTenants: number
   tenantsChange: number
@@ -30,10 +30,12 @@ interface BillingStats {
 
 interface Invoice {
   id: string
-  tenant: string
+  tenantId: string
+  tenantName: string  // Added
   amount: number
-  status: 'paid' | 'pending' | 'overdue'
-  date: string
+  status: 'paid' | 'pending' | 'overdue' | 'open' | 'void'
+  dueDate: string
+  createdAt: string  // Changed from date
 }
 
 
@@ -163,20 +165,20 @@ function EmptyState({ message }: { message: string }) {
 
 export default function DashboardPage() {
   // Fetch dashboard stats from real API
-  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<BillingStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const response = await api.get('/api/billing/stats');
-      return response.data;
+      const response = await api.get('/api/billing/stats/dashboard');
+      return response.data.data; // ✅ Extract data from wrapped response
     },
   });
 
   // Fetch recent invoices from real API
-  const { data: invoices, isLoading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useQuery<Invoice[]>({
     queryKey: ['recent-invoices'],
     queryFn: async () => {
       const response = await api.get('/api/billing/invoices?limit=5');
-      return response.data;
+      return response.data.data || []; // ✅ Extract array from wrapped response
     },
   });
 
@@ -192,6 +194,8 @@ export default function DashboardPage() {
       paid: 'bg-green-100 text-green-700 hover:bg-green-100',
       pending: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100',
       overdue: 'bg-red-100 text-red-700 hover:bg-red-100',
+      open: 'bg-blue-100 text-blue-700 hover:bg-blue-100',
+      void: 'bg-gray-100 text-gray-700 hover:bg-gray-100',
     }
     return (
       <Badge className={variants[status]} variant="secondary">
@@ -237,7 +241,7 @@ export default function DashboardPage() {
             loading={statsLoading}
           />
           <MetricCard
-            title="Pending Invoices"
+            title="Total Invoices"
             value={stats?.totalInvoices ?? 0}
             change={stats?.invoicesChange ?? 0}
             icon={FileText}
@@ -347,7 +351,7 @@ export default function DashboardPage() {
                 {invoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell className="font-mono text-xs">
-                      {invoice.id}
+                      {invoice.id.slice(0, 8)}...
                     </TableCell>
                     <TableCell className="font-medium">{invoice.tenantName}</TableCell>
                     <TableCell>{formatCurrency(invoice.amount)}</TableCell>
