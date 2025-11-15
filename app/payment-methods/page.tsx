@@ -8,6 +8,7 @@ import { Plus, CreditCard, AlertCircle } from 'lucide-react';
 import { paymentMethodsService } from '@/lib/services/payments.service';
 import { PaymentMethodCard } from '@/components/payment-methods/payment-method-card';
 import { AddPaymentMethodDialog } from '@/components/payment-methods/add-payment-method-dialog';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 export default function PaymentMethodsPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -25,7 +26,8 @@ export default function PaymentMethodsPage() {
   // Loading State
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8">
+        <Skeleton className="h-5 w-64" />
         <div className="flex items-center justify-between">
           <div>
             <Skeleton className="h-9 w-64" />
@@ -45,12 +47,18 @@ export default function PaymentMethodsPage() {
   // Error State
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8">
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Payment Methods', current: true },
+          ]}
+        />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Payment Methods</h1>
             <p className="text-muted-foreground mt-2">
-              Manage your saved payment methods
+              Manage saved payment methods
             </p>
           </div>
           <Button onClick={() => setAddDialogOpen(true)}>
@@ -80,7 +88,13 @@ export default function PaymentMethodsPage() {
   // Empty State
   if (!paymentMethods || paymentMethods.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8">
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Payment Methods', current: true },
+          ]}
+        />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Payment Methods</h1>
@@ -117,7 +131,15 @@ export default function PaymentMethodsPage() {
 
   // Payment Methods Grid
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Payment Methods', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

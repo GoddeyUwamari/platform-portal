@@ -17,6 +17,7 @@ import {
   type ChangePasswordPayload,
 } from '@/lib/services/user.service';
 import { useAuth } from '@/hooks/useAuth';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
@@ -96,7 +97,8 @@ export default function ProfilePage() {
 
   if (isLoading || !user) {
     return (
-      <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-4xl mx-auto">
+        <Skeleton className="h-5 w-64" />
         <Skeleton className="h-10 w-48" />
         <Card>
           <CardHeader>
@@ -111,7 +113,15 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-4xl mx-auto">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Profile', current: true },
+        ]}
+      />
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
         <p className="text-muted-foreground mt-2">

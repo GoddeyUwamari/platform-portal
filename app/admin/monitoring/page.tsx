@@ -6,6 +6,7 @@ import { RefreshCw, Activity } from 'lucide-react';
 import { monitoringService } from '@/lib/services/monitoring.service';
 import { SystemHealthScore } from '@/components/monitoring/system-health-score';
 import { ServiceHealthGrid } from '@/components/monitoring/service-health-grid';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 export default function MonitoringPage() {
   // Fetch system health with auto-refresh every 30 seconds
@@ -36,7 +37,15 @@ export default function MonitoringPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Monitoring', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

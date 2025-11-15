@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Download, Printer, Copy, CheckCircle2 } from 'lucide-react';
+import { Download, Printer, Copy, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,8 @@ import { PaymentStatusBadge } from '@/components/payments/payment-status-badge';
 import { IssueRefundDialog } from '@/components/payments/issue-refund-dialog';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
+import { BackButton } from '@/components/navigation/back-button';
 
 export default function PaymentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -57,7 +59,8 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-5xl mx-auto">
+        <Skeleton className="h-5 w-64" />
         <Skeleton className="h-10 w-64" />
         <div className="grid grid-cols-2 gap-6">
           <Card>
@@ -83,11 +86,15 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
 
   if (error || !payment) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => router.push('/payments')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Payments
-        </Button>
+      <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-5xl mx-auto">
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Payments', href: '/payments' },
+            { label: 'Payment Details', current: true },
+          ]}
+        />
+        <BackButton href="/payments" label="Back to Payments" />
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-red-500">Failed to load payment</p>
@@ -103,20 +110,26 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
   const canRefund = payment.status === 'succeeded';
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-5xl mx-auto">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Payments', href: '/payments' },
+          { label: payment.transactionId, current: true },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push('/payments')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Payment Details</h1>
-            <p className="text-muted-foreground">
-              {formatDate(payment.createdAt)}
-            </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-4">
+            <BackButton href="/payments" label="Back to Payments" />
           </div>
+          <h1 className="text-3xl font-bold">Payment Details</h1>
+          <p className="text-muted-foreground">
+            {formatDate(payment.createdAt)}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleDownloadReceipt}>

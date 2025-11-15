@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Download, Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { invoicesService } from '@/lib/services/invoices.service';
 import { InvoiceActions } from '@/components/invoices/invoice-actions';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
+import { BackButton } from '@/components/navigation/back-button';
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -29,7 +31,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 md:px-6 lg:px-8">
+        <Skeleton className="h-5 w-64" />
         <Skeleton className="h-10 w-64" />
         <Card>
           <CardHeader>
@@ -45,11 +48,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   if (error || !invoice) {
     return (
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => (window.location.href = '/invoices')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Invoices
-        </Button>
+      <div className="space-y-6 px-4 md:px-6 lg:px-8">
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Invoices', href: '/invoices' },
+            { label: 'Invoice Details', current: true },
+          ]}
+        />
+        <BackButton href="/invoices" label="Back to Invoices" />
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-red-500">Failed to load invoice</p>
@@ -94,20 +101,26 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8 max-w-5xl mx-auto">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Invoices', href: '/invoices' },
+          { label: invoice.invoiceNumber, current: true },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => (window.location.href = '/invoices')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{invoice.invoiceNumber}</h1>
-            <p className="text-muted-foreground">
-              Created on {formatDate(invoice.createdAt)}
-            </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-4">
+            <BackButton href="/invoices" label="Back to Invoices" />
           </div>
+          <h1 className="text-3xl font-bold">{invoice.invoiceNumber}</h1>
+          <p className="text-muted-foreground">
+            Created on {formatDate(invoice.createdAt)}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {invoice.pdfUrl && (

@@ -53,7 +53,7 @@ export function SystemHealthScore({ systemHealth }: SystemHealthScoreProps) {
   };
 
   return (
-    <Card className={`border-l-4 ${config.borderColor} ${config.bgColor}`}>
+   <Card className={`border-l-4 ${config.borderColor} ${config.bgColor}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">

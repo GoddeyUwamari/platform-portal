@@ -7,6 +7,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import {
   Table,
   TableBody,
@@ -204,7 +205,15 @@ export default function TenantsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Tenants', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Tenants</h1>

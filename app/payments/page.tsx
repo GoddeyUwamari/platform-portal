@@ -8,6 +8,7 @@ import { paymentsService } from '@/lib/services/payments.service';
 import { PaymentFiltersComponent } from '@/components/payments/payment-filters';
 import { PaymentList } from '@/components/payments/payment-list';
 import { PaymentStatsCards } from '@/components/payments/payment-stats-cards';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 import type { PaymentFilters } from '@/lib/types';
 
 export default function PaymentsPage() {
@@ -98,7 +99,15 @@ export default function PaymentsPage() {
   const totalPages = Math.ceil((payments.length || 0) / (filters.limit || 20));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Payments', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

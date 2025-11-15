@@ -24,6 +24,7 @@ import { AlertCircle, FileText, Plus } from 'lucide-react'
 import api from '@/lib/api'
 import { InvoiceFormDialog } from '@/components/invoices/invoice-form-dialog'
 import { InvoiceActions } from '@/components/invoices/invoice-actions'
+import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import type { Invoice } from '@/lib/types'
 
 export default function InvoicesPage() {
@@ -75,7 +76,15 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Invoices', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

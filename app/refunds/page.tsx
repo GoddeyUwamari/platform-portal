@@ -7,6 +7,7 @@ import { Download } from 'lucide-react';
 import { refundsService } from '@/lib/services/payments.service';
 import { RefundFiltersComponent } from '@/components/refunds/refund-filters';
 import { RefundList } from '@/components/refunds/refund-list';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 interface RefundFilters {
   status?: string;
@@ -105,7 +106,15 @@ export default function RefundsPage() {
   const totalPages = Math.ceil((refunds.length || 0) / (filters.limit || 20));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Refunds', current: true },
+        ]}
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
