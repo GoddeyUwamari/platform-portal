@@ -301,3 +301,78 @@ export interface UpdatePaymentMethodPayload {
   expiryMonth?: number;
   expiryYear?: number;
 }
+
+// Monitoring & Health Check
+export type ServiceStatus = 'healthy' | 'unhealthy' | 'degraded';
+export type OverallSystemStatus = 'operational' | 'degraded' | 'disrupted';
+
+// Actual backend response format (direct, not wrapped)
+export interface BackendServiceHealth {
+  status: string;
+  responseTime: number;
+}
+
+export interface GatewayHealthResponse {
+  status: string;
+  timestamp: string;
+  uptime: number;
+  version: string;
+  environment: string;
+  gateway: {
+    status: string;
+    memory?: {
+      heapUsed: number;
+      heapTotal: number;
+      rss: number;
+      unit: string;
+    };
+    cpu?: {
+      user: number;
+      system: number;
+    };
+  };
+  services: {
+    'auth-service'?: BackendServiceHealth;
+    'billing-service'?: BackendServiceHealth;
+    'payment-service'?: BackendServiceHealth;
+    'notification-service'?: BackendServiceHealth;
+    postgresql?: BackendServiceHealth;
+    redis?: BackendServiceHealth;
+  };
+  checks: {
+    duration: string;
+    total: number;
+    healthy: number;
+    unhealthy: number;
+  };
+}
+
+// Individual microservice health response (Auth, Billing, Payment, Notification)
+export interface MicroserviceHealthResponse {
+  status: string;
+  timestamp: string;
+  uptime: number;
+  version: string;
+  service: string;
+}
+
+export interface ServiceHealth {
+  name: string;
+  url: string;
+  port?: number;
+  status: ServiceStatus;
+  responseTime: number;
+  uptime: number;
+  lastCheck: string;
+  version?: string;
+  error?: string;
+}
+
+export interface SystemHealth {
+  status: OverallSystemStatus;
+  servicesUp: number;
+  totalServices: number;
+  healthPercentage: number;
+  services: ServiceHealth[];
+  lastUpdate: string;
+}
