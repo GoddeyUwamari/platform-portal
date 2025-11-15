@@ -199,7 +199,7 @@ export default function InvoicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((invoice) => (
+              {invoices.map((invoice: Invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">
                     {invoice.invoiceNumber || invoice.id.substring(0, 8)}

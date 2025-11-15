@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CreditCard, FileText, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, FileText, Banknote, Wallet, RefreshCcw, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -18,6 +18,9 @@ const navigation = [
   { name: 'Tenants', href: '/tenants', icon: Users },
   { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard },
   { name: 'Invoices', href: '/invoices', icon: FileText },
+  { name: 'Payments', href: '/payments', icon: Banknote },
+  { name: 'Payment Methods', href: '/payment-methods', icon: Wallet },
+  { name: 'Refunds', href: '/refunds', icon: RefreshCcw },
 ]
 
 export function Sidebar() {

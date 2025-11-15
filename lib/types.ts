@@ -193,3 +193,111 @@ export interface ChangePlanPayload {
 export interface CancelSubscriptionPayload {
   immediately?: boolean;
 }
+
+// Payment Management
+export type PaymentStatus = 'succeeded' | 'pending' | 'failed' | 'cancelled' | 'refunded';
+
+export interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  paymentMethod: string;
+  paymentMethodType?: string;
+  invoiceId?: string;
+  customerId?: string;
+  customerName?: string;
+  transactionId: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentMethod {
+  id: string;
+  type: string;
+  brand?: string;
+  last4?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isDefault: boolean;
+  customerId?: string;
+  createdAt: string;
+}
+
+export interface PaymentIntent {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  clientSecret?: string;
+  paymentMethodId?: string;
+  customerId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface Refund {
+  id: string;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface PaymentStats {
+  totalAmount: number;
+  totalCount: number;
+  successfulCount: number;
+  failedCount: number;
+  refundedAmount: number;
+}
+
+export interface RefundStats {
+  totalAmount: number;
+  totalCount: number;
+}
+
+export interface PaymentFilters {
+  status?: PaymentStatus;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreatePaymentIntentPayload {
+  amount: number;
+  currency?: string;
+  paymentMethodId?: string;
+  customerId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CreateRefundPayload {
+  paymentId: string;
+  amount?: number;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AddPaymentMethodPayload {
+  type: string;
+  cardNumber?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  cvc?: string;
+  customerId?: string;
+}
+
+export interface UpdatePaymentMethodPayload {
+  expiryMonth?: number;
+  expiryYear?: number;
+}
