@@ -1,279 +1,136 @@
-# Platform Portal - Internal Developer Platform
+# Platform Portal
 
-A comprehensive internal developer portal for managing platform engineering infrastructure, services, and deployments.
+Internal Developer Portal for the [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit) - A production-ready monorepo with Next.js 15 frontend and Express.js backend for managing services, deployments, and AWS infrastructure.
 
-## Architecture
+![Dashboard](docs/screenshots/01-dashboard.png)
 
-This is a **monorepo** containing:
-- **Frontend**: Next.js 15 application (port 3010)
-- **Backend**: Express.js REST API (port 8080)
-- **Database**: PostgreSQL running in Docker
+## 🎯 What is This?
 
-## Project Structure
+A complete platform engineering solution that provides visibility and management for services created via the Platform CLI. Track deployments, monitor AWS resources, and manage costs—all from a beautiful web dashboard.
 
+## ✨ Features
+
+### 📊 Dashboard
+- Real-time platform metrics (services, deployments, costs)
+- Recent deployment history
+- Service health overview
+- Monthly AWS cost tracking
+
+### 🚀 Service Catalog
+- View all services created via CLI
+- Filter by template type (API, Microservices)
+- GitHub repository links
+- Service status tracking
+
+![Services](docs/screenshots/02-services.png)
+
+### 🔄 Deployment History
+- Track deployments across environments (dev, staging, production)
+- Deployment status and cost estimates
+- AWS region information
+- Deployed by user tracking
+
+![Deployments](docs/screenshots/03-deployments.png)
+
+### ☁️ Infrastructure Monitoring
+- AWS resource tracking (EC2, RDS, S3, Lambda, VPC, CloudFront, ELB)
+- Monthly cost breakdown per resource
+- Resource status monitoring
+- Filter by resource type
+
+![Infrastructure](docs/screenshots/04-infrastructure.png)
+
+### 👥 Teams & Monitoring
+- Team management and service ownership
+- System health monitoring
+- Service uptime tracking
+
+## 🏗️ Architecture
+
+### Monorepo Structure
 ```
 platform-portal/
-├── backend/                    # Express.js API
+├── backend/              # Express.js + TypeScript API
 │   ├── src/
-│   │   ├── config/            # Database configuration
-│   │   ├── controllers/       # Request handlers
-│   │   ├── middleware/        # Express middleware
-│   │   ├── repositories/      # Data access layer
-│   │   ├── routes/            # API routes
-│   │   ├── types/             # TypeScript types
-│   │   └── server.ts          # Main entry point
+│   │   ├── config/      # Database configuration
+│   │   ├── controllers/ # Request handlers
+│   │   ├── middleware/  # Express middleware
+│   │   ├── repositories/# Data access layer
+│   │   ├── routes/      # API routes
+│   │   ├── types/       # TypeScript types
+│   │   └── server.ts    # Express app
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── .env
-├── app/                       # Next.js frontend
-├── components/                # React components
-├── lib/                       # Frontend utilities
-├── database/                  # Database migrations & seeds
-├── public/                    # Static assets
-└── package.json              # Root workspace config
+│   └── tsconfig.json
+├── app/                 # Next.js 15 frontend
+├── components/          # React components
+├── lib/                 # Frontend utilities
+├── database/            # PostgreSQL migrations & seeds
+└── package.json         # Root workspace config
 ```
 
-## Features
+### Tech Stack
 
-- 📊 **Service Catalog** - View all deployed services
-- 🚀 **Deployment History** - Track all deployments
-- 💰 **Cost Dashboard** - Monitor AWS spending
-- 👥 **Team Ownership** - See who owns what
-- 📈 **Real-time Monitoring** - Service health status
-- 🏗️ **Infrastructure Management** - Track AWS resources
-- 📡 **REST API** - Full-featured backend API
-
-## Tech Stack
-
-### Frontend
-- Next.js 15 + React 19
+**Frontend:**
+- Next.js 15 (App Router)
+- React 19
 - TypeScript
-- TailwindCSS v4
-- Radix UI
-- React Query + Zustand
+- Tailwind CSS v4
+- Radix UI components
+- React Query (data fetching)
+- Zustand (state management)
 
-### Backend
-- Express.js + TypeScript
+**Backend:**
+- Express.js
+- TypeScript
 - PostgreSQL
-- Helmet (security)
-- Morgan (logging)
-- CORS
+- Node.js 20+
 
-## Prerequisites
+**DevOps:**
+- Docker (PostgreSQL)
+- npm workspaces (monorepo)
+- Concurrent dev servers
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Node.js 20+
-- Docker & Docker Compose
-- PostgreSQL (via Docker)
+- Docker (for PostgreSQL)
+- npm or yarn
 
-## Quick Start
-
-### 1. Clone and Install
-
+### Installation
 ```bash
+# Clone the repository
+git clone https://github.com/GoddeyUwamari/platform-portal.git
 cd platform-portal
+
+# Install dependencies (root + backend)
 npm install
-```
 
-### 2. Start PostgreSQL Database
-
-```bash
+# Start PostgreSQL
 docker run -d \
   --name platform-postgres \
-  -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=platform_portal \
   -p 5432:5432 \
-  postgres:16
-```
+  postgres:14
 
-### 3. Verify Database Schema
+# Run database migrations
+node database/migrate.js
 
-```bash
-docker exec -it platform-postgres psql -U postgres -d platform_portal -c "\dt"
-```
+# Optional: Seed sample data
+psql -h localhost -U postgres -d platform_portal -f database/seeds/001_platform_seed.sql
 
-You should see: `teams`, `services`, `deployments`, `infrastructure_resources`
-
-### 4. Start Development Servers
-
-```bash
-# Start both frontend and backend concurrently
+# Start both frontend and backend
 npm run dev
 ```
 
-Or start them separately:
-
-```bash
-# Terminal 1 - Backend
-npm run dev:backend
-
-# Terminal 2 - Frontend
-npm run dev:frontend
-```
-
-### 5. Verify Setup
-
+**Servers will start:**
 - Frontend: http://localhost:3010
-- Backend API: http://localhost:8080/api
+- Backend API: http://localhost:8080
 - Health check: http://localhost:8080/health
 
-## API Endpoints
-
-### Services (`/api/services`)
-
-```bash
-# Get all services
-GET /api/services?status=active&team_id=uuid&limit=50&offset=0
-
-# Get service by ID
-GET /api/services/:id
-
-# Create service
-POST /api/services
-{
-  "name": "my-api",
-  "template": "api",
-  "owner": "GoddeyUwamari",
-  "team_id": "uuid",
-  "github_url": "https://github.com/user/my-api",
-  "description": "My awesome API"
-}
-
-# Update service
-PUT /api/services/:id
-{
-  "status": "inactive",
-  "description": "Updated description"
-}
-
-# Delete service
-DELETE /api/services/:id
-```
-
-### Deployments (`/api/deployments`)
-
-```bash
-# Get all deployments
-GET /api/deployments?service_id=uuid&environment=development&status=running
-
-# Get deployment by ID
-GET /api/deployments/:id
-
-# Create deployment
-POST /api/deployments
-{
-  "service_id": "uuid",
-  "environment": "development",
-  "aws_region": "us-east-1",
-  "status": "running",
-  "cost_estimate": 0.00,
-  "deployed_by": "GoddeyUwamari",
-  "resources": {
-    "ec2_instance_id": "i-1234567890",
-    "rds_instance_id": "mydb.us-east-1.rds.amazonaws.com"
-  }
-}
-
-# Delete deployment
-DELETE /api/deployments/:id
-```
-
-### Infrastructure (`/api/infrastructure`)
-
-```bash
-# Get all infrastructure resources
-GET /api/infrastructure?service_id=uuid&resource_type=ec2&status=running
-
-# Get resource by ID
-GET /api/infrastructure/:id
-
-# Get cost breakdown
-GET /api/infrastructure/costs
-
-# Create infrastructure resource
-POST /api/infrastructure
-{
-  "service_id": "uuid",
-  "resource_type": "ec2",
-  "aws_id": "i-1234567890",
-  "aws_region": "us-east-1",
-  "status": "running",
-  "cost_per_month": 8.50,
-  "metadata": {
-    "instance_type": "t2.micro"
-  }
-}
-
-# Delete resource
-DELETE /api/infrastructure/:id
-```
-
-### Teams (`/api/teams`)
-
-```bash
-# Get all teams
-GET /api/teams
-
-# Get team by ID
-GET /api/teams/:id
-
-# Get team services
-GET /api/teams/:id/services
-
-# Create team
-POST /api/teams
-{
-  "name": "Platform Team",
-  "owner": "GoddeyUwamari",
-  "description": "Platform engineering team"
-}
-```
-
-### Platform Stats (`/api/platform`)
-
-```bash
-# Get dashboard statistics
-GET /api/platform/stats/dashboard
-```
-
-## Testing API Endpoints
-
-### Using cURL
-
-```bash
-# Health check
-curl http://localhost:8080/health
-
-# Create a service
-curl -X POST http://localhost:8080/api/services \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "test-api",
-    "template": "api",
-    "owner": "GoddeyUwamari",
-    "team_id": "11111111-1111-1111-1111-111111111111",
-    "description": "Test API service"
-  }'
-
-# Get all services
-curl http://localhost:8080/api/services
-
-# Get platform stats
-curl http://localhost:8080/api/platform/stats/dashboard
-```
-
-## Build for Production
-
-```bash
-# Build both frontend and backend
-npm run build
-
-# Start production servers
-npm start
-```
-
-## Development Scripts
-
+### Development
 ```bash
 # Start both services
 npm run dev
@@ -284,146 +141,159 @@ npm run dev:frontend
 # Start backend only
 npm run dev:backend
 
-# Build both
+# Build for production
 npm run build
 
-# Build frontend only
-npm run build:frontend
-
-# Build backend only
-npm run build:backend
-
-# Production mode
+# Start production servers
 npm start
 ```
 
-## Environment Variables
-
-### Backend (backend/.env)
-
-```env
-PORT=8080
-NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=platform_portal
-DB_USER=postgres
-DB_PASSWORD=postgres
-FRONTEND_URL=http://localhost:3010
-```
-
-## Database Schema
-
-### Teams
-- `id` (UUID, primary key)
-- `name` (string)
-- `owner` (string)
-- `description` (text)
-- `created_at`, `updated_at` (timestamps)
+## 📡 API Endpoints
 
 ### Services
-- `id` (UUID, primary key)
-- `name` (string)
-- `template` (enum: api, frontend, worker, database)
-- `owner` (string)
-- `team_id` (UUID, foreign key)
-- `github_url` (string)
-- `description` (text)
-- `status` (enum: active, inactive, archived)
-- `created_at`, `updated_at` (timestamps)
+```
+GET    /api/services              # List all services
+POST   /api/services              # Create service
+GET    /api/services/:id          # Get service by ID
+PUT    /api/services/:id          # Update service
+DELETE /api/services/:id          # Delete service
+```
 
 ### Deployments
-- `id` (UUID, primary key)
-- `service_id` (UUID, foreign key)
-- `environment` (enum: development, staging, production)
-- `aws_region` (string)
-- `status` (enum: running, stopped, deploying, failed)
-- `cost_estimate` (decimal)
-- `deployed_by` (string)
-- `deployed_at` (timestamp)
-- `resources` (jsonb)
-- `created_at`, `updated_at` (timestamps)
-
-### Infrastructure Resources
-- `id` (UUID, primary key)
-- `service_id` (UUID, foreign key)
-- `resource_type` (enum: ec2, rds, vpc, s3, lambda, elasticache, other)
-- `aws_id` (string)
-- `aws_region` (string)
-- `status` (enum: running, stopped, terminated)
-- `cost_per_month` (decimal)
-- `metadata` (jsonb)
-- `created_at`, `updated_at` (timestamps)
-
-## API Response Format
-
-All endpoints return a consistent response format:
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": { ... },
-  "total": 10
-}
+```
+GET    /api/deployments           # List deployments
+POST   /api/deployments           # Record deployment
+GET    /api/deployments/:id       # Get deployment details
+DELETE /api/deployments/:id       # Delete deployment
 ```
 
-### Error Response
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE"
-}
+### Infrastructure
+```
+GET    /api/infrastructure        # List AWS resources
+POST   /api/infrastructure        # Add resource
+GET    /api/infrastructure/costs  # Cost breakdown
 ```
 
-## Architecture Patterns
+### Platform Stats
+```
+GET    /api/platform/stats/dashboard  # Dashboard metrics
+```
 
-### Repository Pattern
-Data access logic is separated into repository classes for each entity.
+### Teams
+```
+GET    /api/teams                 # List teams
+GET    /api/teams/:id/services    # Team's services
+POST   /api/teams                 # Create team
+```
 
-### Controller Pattern
-Business logic is handled in controllers, with repositories managing data access.
+## 🗄️ Database Schema
+```sql
+-- Teams
+CREATE TABLE teams (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) UNIQUE,
+  description TEXT,
+  owner VARCHAR(255),
+  members TEXT[],
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
-### Middleware Chain
-- Helmet (security headers)
-- CORS (cross-origin requests)
-- Body parser (JSON/URL-encoded)
-- Morgan & Custom logger (request logging)
-- Error handler (centralized error handling)
+-- Services
+CREATE TABLE services (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255),
+  template VARCHAR(50),
+  owner VARCHAR(255),
+  team_id UUID REFERENCES teams(id),
+  github_url TEXT,
+  status VARCHAR(50),
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
-## Troubleshooting
+-- Deployments
+CREATE TABLE deployments (
+  id UUID PRIMARY KEY,
+  service_id UUID REFERENCES services(id),
+  environment VARCHAR(50),
+  aws_region VARCHAR(50),
+  status VARCHAR(50),
+  cost_estimate DECIMAL(10,2),
+  deployed_by VARCHAR(255),
+  deployed_at TIMESTAMP DEFAULT NOW()
+);
 
-### Database Connection Issues
+-- Infrastructure Resources
+CREATE TABLE infrastructure_resources (
+  id UUID PRIMARY KEY,
+  service_id UUID REFERENCES services(id),
+  resource_type VARCHAR(50),
+  aws_id VARCHAR(255),
+  aws_region VARCHAR(50),
+  status VARCHAR(50),
+  cost_per_month DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
 
+## 🔗 Integration with Platform CLI
+
+The portal integrates seamlessly with the [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit):
 ```bash
-# Check if PostgreSQL is running
-docker ps | grep platform-postgres
+# CLI creates service and notifies portal
+platform create api my-service --github
 
-# Check database logs
-docker logs platform-postgres
-
-# Connect to database manually
-docker exec -it platform-postgres psql -U postgres -d platform_portal
+# CLI deploys and records in portal
+platform deploy aws my-service
 ```
 
-### Port Already in Use
+## 📸 Screenshots
 
-```bash
-# Kill process on port 8080
-lsof -ti:8080 | xargs kill -9
+### Dashboard
+![Dashboard](docs/screenshots/01-dashboard.png)
 
-# Kill process on port 3010
-lsof -ti:3010 | xargs kill -9
-```
+### Services
+![Services](docs/screenshots/02-services.png)
 
-## Contributing
+### Deployments
+![Deployments](docs/screenshots/03-deployments.png)
 
-1. Create a feature branch
-2. Make changes
-3. Test thoroughly
-4. Submit PR
+### Infrastructure
+![Infrastructure](docs/screenshots/04-infrastructure.png)
 
-## License
+### Teams
+![Teams](docs/screenshots/05-teams.png)
 
-MIT
+### Monitoring
+![Monitoring](docs/screenshots/06-monitoring.png)
+
+## 🤝 Contributing
+
+This is a portfolio project, but feedback and suggestions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+## 👤 Author
+
+**Goddey Uwamari**
+
+- 🏢 Founder & CEO, WayUP Technology
+- 💼 Senior Full-Stack & Platform Engineer
+- 🌐 GitHub: [@GoddeyUwamari](https://github.com/GoddeyUwamari)
+- 🔗 LinkedIn: [Goddey Uwamari](https://www.linkedin.com/in/goddeyuwamari)
+
+## 🙏 Acknowledgments
+
+- Built with Next.js 15, React 19, and Express.js
+- Inspired by modern platform engineering practices
+- Part of the Platform Engineering Toolkit ecosystem
+
+## 🔗 Related Projects
+
+- [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit) - CLI tool for service creation and AWS deployment
