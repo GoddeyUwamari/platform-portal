@@ -10,34 +10,82 @@ export const deploymentsService = {
   // Get all deployments with optional filters
   getAll: async (filters?: DeploymentFilters): Promise<Deployment[]> => {
     const params = new URLSearchParams();
-
-    if (filters?.serviceId) params.append('serviceId', filters.serviceId);
+    if (filters?.serviceId) params.append('service_id', filters.serviceId);
     if (filters?.environment) params.append('environment', filters.environment);
     if (filters?.status) params.append('status', filters.status);
-    if (filters?.startDate) params.append('startDate', filters.startDate);
-    if (filters?.endDate) params.append('endDate', filters.endDate);
-
-    const queryString = params.toString();
-    const url = `/api/deployments${queryString ? `?${queryString}` : ''}`;
-
-    const response = await api.get<ApiResponse<Deployment[]>>(url);
-    return handleApiResponse(response);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const response = await api.get<ApiResponse<any>>(`/api/deployments${queryString}`);
+    const result = handleApiResponse(response);
+    
+    // Transform backend snake_case to frontend camelCase
+    return (result || []).map((d: any) => ({
+      id: d.id,
+      serviceId: d.service_id,
+      serviceName: d.service_name,
+      environment: d.environment,
+      awsRegion: d.aws_region,
+      status: d.status,
+      costEstimate: parseFloat(d.cost_estimate) || 0,
+      deployedBy: d.deployed_by,
+      deployedAt: d.deployed_at,
+      resources: d.resources,
+      logs: d.logs,
+      metadata: d.metadata,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    }));
   },
 
   // Get deployment by ID
   getById: async (id: string): Promise<Deployment> => {
-    const response = await api.get<ApiResponse<Deployment>>(`/api/deployments/${id}`);
-    return handleApiResponse(response);
+    const response = await api.get<ApiResponse<any>>(`/api/deployments/${id}`);
+    const d = handleApiResponse(response);
+    
+    return {
+      id: d.id,
+      serviceId: d.service_id,
+      serviceName: d.service_name,
+      environment: d.environment,
+      awsRegion: d.aws_region,
+      status: d.status,
+      costEstimate: parseFloat(d.cost_estimate) || 0,
+      deployedBy: d.deployed_by,
+      deployedAt: d.deployed_at,
+      resources: d.resources,
+      logs: d.logs,
+      metadata: d.metadata,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    };
   },
 
-  // Create deployment (called by CLI)
-  create: async (data: CreateDeploymentPayload): Promise<Deployment> => {
-    const response = await api.post<ApiResponse<Deployment>>('/api/deployments', data);
-    return handleApiResponse(response);
+  // Create new deployment
+  create: async (payload: CreateDeploymentPayload): Promise<Deployment> => {
+    const response = await api.post<ApiResponse<any>>('/api/deployments', payload);
+    const d = handleApiResponse(response);
+    
+    return {
+      id: d.id,
+      serviceId: d.service_id,
+      serviceName: d.service_name,
+      environment: d.environment,
+      awsRegion: d.aws_region,
+      status: d.status,
+      costEstimate: parseFloat(d.cost_estimate) || 0,
+      deployedBy: d.deployed_by,
+      deployedAt: d.deployed_at,
+      resources: d.resources,
+      logs: d.logs,
+      metadata: d.metadata,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    };
   },
 
-  // Get deployments for a specific service
-  getByService: async (serviceId: string): Promise<Deployment[]> => {
-    return deploymentsService.getAll({ serviceId });
+  // Delete deployment
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/deployments/${id}`);
   },
 };

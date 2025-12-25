@@ -1,0 +1,117 @@
+import { pool } from '../config/database';
+import { Deployment, DeploymentFilters, CreateDeploymentRequest } from '../types';
+
+export class DeploymentsRepository {
+  async findAll(filters?: DeploymentFilters): Promise<{ deployments: Deployment[]; total: number }> {
+    let query = `
+      SELECT
+        d.*,
+        s.name as service_name
+      FROM deployments d
+      LEFT JOIN services s ON d.service_id = s.id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (filters?.service_id) {
+      paramCount++;
+      params.push(filters.service_id);
+      query += ` AND d.service_id = $${paramCount}`;
+    }
+
+    if (filters?.environment) {
+      paramCount++;
+      params.push(filters.environment);
+      query += ` AND d.environment = $${paramCount}`;
+    }
+
+    if (filters?.status) {
+      paramCount++;
+      params.push(filters.status);
+      query += ` AND d.status = $${paramCount}`;
+    }
+
+    query += ' ORDER BY d.deployed_at DESC';
+
+    if (filters?.limit) {
+      paramCount++;
+      params.push(filters.limit);
+      query += ` LIMIT $${paramCount}`;
+    }
+
+    if (filters?.offset) {
+      paramCount++;
+      params.push(filters.offset);
+      query += ` OFFSET $${paramCount}`;
+    }
+
+    const [deploymentsResult, countResult] = await Promise.all([
+      pool.query(query, params),
+      pool.query('SELECT COUNT(*) FROM deployments')
+    ]);
+
+    return {
+      deployments: deploymentsResult.rows,
+      total: parseInt(countResult.rows[0].count)
+    };
+  }
+
+  async findById(id: string): Promise<Deployment | null> {
+    const query = `
+      SELECT
+        d.*,
+        s.name as service_name
+      FROM deployments d
+      LEFT JOIN services s ON d.service_id = s.id
+      WHERE d.id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  async create(deployment: CreateDeploymentRequest): Promise<Deployment> {
+    const query = `
+      INSERT INTO deployments (
+        service_id, environment, aws_region, status,
+        cost_estimate, deployed_by, resources
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [
+      deployment.service_id,
+      deployment.environment,
+      deployment.aws_region,
+      deployment.status,
+      deployment.cost_estimate || 0.00,
+      deployment.deployed_by,
+      JSON.stringify(deployment.resources || {})
+    ]);
+    return result.rows[0];
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await pool.query('DELETE FROM deployments WHERE id = $1', [id]);
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async findRecentByLimit(limit: number): Promise<Deployment[]> {
+    const query = `
+      SELECT
+        d.*,
+        s.name as service_name
+      FROM deployments d
+      LEFT JOIN services s ON d.service_id = s.id
+      ORDER BY d.deployed_at DESC
+      LIMIT $1
+    `;
+    const result = await pool.query(query, [limit]);
+    return result.rows;
+  }
+
+  async countByStatus(status: string): Promise<number> {
+    const result = await pool.query('SELECT COUNT(*) FROM deployments WHERE status = $1', [status]);
+    return parseInt(result.rows[0].count);
+  }
+}

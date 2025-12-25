@@ -3,37 +3,100 @@ import type {
   Service,
   CreateServicePayload,
   UpdateServicePayload,
+  ServiceFilters,
   ApiResponse,
 } from '../types';
 
 export const servicesService = {
-  // Get all services
-  getAll: async (): Promise<Service[]> => {
-    const response = await api.get<ApiResponse<Service[]>>('/api/services');
-    return handleApiResponse(response);
+  // Get all services with optional filters
+  getAll: async (filters?: ServiceFilters): Promise<Service[]> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.teamId) params.append('team_id', filters.teamId);
+    if (filters?.template) params.append('template', filters.template);
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const response = await api.get<ApiResponse<any>>(`/api/services${queryString}`);
+    const result = handleApiResponse(response);
+    
+    // Transform backend snake_case to frontend camelCase
+    return (result || []).map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      template: s.template,
+      owner: s.owner,
+      teamId: s.team_id,
+      githubUrl: s.github_url,
+      status: s.status,
+      description: s.description,
+      metadata: s.metadata,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    }));
   },
 
   // Get service by ID
   getById: async (id: string): Promise<Service> => {
-    const response = await api.get<ApiResponse<Service>>(`/api/services/${id}`);
-    return handleApiResponse(response);
+    const response = await api.get<ApiResponse<any>>(`/api/services/${id}`);
+    const s = handleApiResponse(response);
+    
+    return {
+      id: s.id,
+      name: s.name,
+      template: s.template,
+      owner: s.owner,
+      teamId: s.team_id,
+      githubUrl: s.github_url,
+      status: s.status,
+      description: s.description,
+      metadata: s.metadata,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    };
   },
 
   // Create new service
-  create: async (data: CreateServicePayload): Promise<Service> => {
-    const response = await api.post<ApiResponse<Service>>('/api/services', data);
-    return handleApiResponse(response);
+  create: async (payload: CreateServicePayload): Promise<Service> => {
+    const response = await api.post<ApiResponse<any>>('/api/services', payload);
+    const s = handleApiResponse(response);
+    
+    return {
+      id: s.id,
+      name: s.name,
+      template: s.template,
+      owner: s.owner,
+      teamId: s.team_id,
+      githubUrl: s.github_url,
+      status: s.status,
+      description: s.description,
+      metadata: s.metadata,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    };
   },
 
   // Update service
-  update: async (id: string, data: UpdateServicePayload): Promise<Service> => {
-    const response = await api.put<ApiResponse<Service>>(`/api/services/${id}`, data);
-    return handleApiResponse(response);
+  update: async (id: string, payload: UpdateServicePayload): Promise<Service> => {
+    const response = await api.put<ApiResponse<any>>(`/api/services/${id}`, payload);
+    const s = handleApiResponse(response);
+    
+    return {
+      id: s.id,
+      name: s.name,
+      template: s.template,
+      owner: s.owner,
+      teamId: s.team_id,
+      githubUrl: s.github_url,
+      status: s.status,
+      description: s.description,
+      metadata: s.metadata,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    };
   },
 
   // Delete service
   delete: async (id: string): Promise<void> => {
-    const response = await api.delete<ApiResponse<void>>(`/api/services/${id}`);
-    return handleApiResponse(response);
+    await api.delete(`/api/services/${id}`);
   },
 };
