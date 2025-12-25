@@ -1,42 +1,15 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, TrendingDown, Users, FileText, CreditCard, DollarSign, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import api from '@/lib/api'
-
-// Revenue timeline data type
-interface RevenueDataPoint {
-  date: string
-  revenue: number
-}
-
-// Types
-interface BillingStats {
-  totalRevenue: number
-  revenueChange: number
-  activeSubscriptions: number
-  subscriptionsChange: number
-  totalInvoices: number  // Changed from pendingInvoices
-  invoicesChange: number
-  activeTenants: number
-  tenantsChange: number
-}
-
-interface Invoice {
-  id: string
-  tenantId: string
-  tenantName: string  // Added
-  amount: number
-  status: 'paid' | 'pending' | 'overdue' | 'open' | 'void'
-  dueDate: string
-  createdAt: string  // Changed from date
-}
+import { platformStatsService } from '@/lib/services/platform-stats.service'
+import { deploymentsService } from '@/lib/services/deployments.service'
+import type { PlatformDashboardStats, Deployment, DeploymentStatus } from '@/lib/types'
 
 
 // Metric Card Component
@@ -164,46 +137,18 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export default function DashboardPage() {
-  // Fetch dashboard stats from real API
-  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<BillingStats>({
-    queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      const response = await api.get('/api/billing/stats/dashboard');
-      return response.data.data; // ✅ Extract data from wrapped response
-    },
+  // Fetch platform dashboard stats
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<PlatformDashboardStats>({
+    queryKey: ['platform-dashboard-stats'],
+    queryFn: platformStatsService.getDashboardStats,
   });
 
-  // Fetch recent invoices from real API
-  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useQuery<Invoice[]>({
-    queryKey: ['recent-invoices'],
+  // Fetch recent deployments
+  const { data: deployments = [], isLoading: deploymentsLoading, error: deploymentsError, refetch: refetchDeployments } = useQuery<Deployment[]>({
+    queryKey: ['recent-deployments'],
     queryFn: async () => {
-      const response = await api.get('/api/billing/invoices?limit=5');
-      return response.data.data || []; // ✅ Extract array from wrapped response
-    },
-  });
-
-  // Fetch revenue timeline data (requires backend endpoint: GET /api/billing/stats/revenue-timeline?days=30)
-  const { data: revenueData = [], isLoading: revenueLoading, error: revenueError } = useQuery<RevenueDataPoint[]>({
-    queryKey: ['revenue-timeline'],
-    queryFn: async () => {
-      try {
-        const response = await api.get('/api/billing/stats/revenue-timeline?days=30');
-        // Extract timeline array from nested response
-        const timeline = response.data.data?.timeline || [];
-        // Transform dates to readable format
-        const formattedData = timeline.map((item: any) => ({
-          date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          revenue: item.revenue,
-        }));
-        return formattedData;
-      } catch (error) {
-        // If endpoint doesn't exist yet, return mock data
-        console.warn('Revenue timeline endpoint not available, using mock data');
-        return Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          revenue: Math.floor(Math.random() * 10000) + 5000,
-        }));
-      }
+      const allDeployments = await deploymentsService.getAll();
+      return allDeployments.slice(0, 5); // Get latest 5
     },
   });
 
@@ -214,13 +159,12 @@ export default function DashboardPage() {
     }).format(amount)
   }
 
-  const getStatusBadge = (status: Invoice['status']) => {
+  const getDeploymentStatusBadge = (status: DeploymentStatus) => {
     const variants = {
-      paid: 'bg-green-100 text-green-700 hover:bg-green-100',
-      pending: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100',
-      overdue: 'bg-red-100 text-red-700 hover:bg-red-100',
-      open: 'bg-blue-100 text-blue-700 hover:bg-blue-100',
-      void: 'bg-gray-100 text-gray-700 hover:bg-gray-100',
+      running: 'bg-green-100 text-green-700 hover:bg-green-100',
+      stopped: 'bg-gray-100 text-gray-700 hover:bg-gray-100',
+      deploying: 'bg-blue-100 text-blue-700 hover:bg-blue-100',
+      failed: 'bg-red-100 text-red-700 hover:bg-red-100',
     }
     return (
       <Badge className={variants[status]} variant="secondary">
@@ -252,137 +196,94 @@ export default function DashboardPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard
-            title="Total Revenue"
-            value={stats ? formatCurrency(stats.totalRevenue) : '$0.00'}
-            change={stats?.revenueChange ?? 0}
+            title="Total Services"
+            value={stats?.totalServices ?? 0}
+            change={stats?.servicesChange ?? 0}
+            icon={Layers}
+            loading={statsLoading}
+          />
+          <MetricCard
+            title="Active Deployments"
+            value={stats?.activeDeployments ?? 0}
+            change={stats?.deploymentsChange ?? 0}
+            icon={Rocket}
+            loading={statsLoading}
+          />
+          <MetricCard
+            title="Monthly AWS Cost"
+            value={stats ? formatCurrency(stats.monthlyAwsCost) : '$0.00'}
+            change={stats?.costChange ?? 0}
             icon={DollarSign}
             loading={statsLoading}
           />
           <MetricCard
-            title="Active Subscriptions"
-            value={stats?.activeSubscriptions ?? 0}
-            change={stats?.subscriptionsChange ?? 0}
-            icon={CreditCard}
-            loading={statsLoading}
-          />
-          <MetricCard
-            title="Total Invoices"
-            value={stats?.totalInvoices ?? 0}
-            change={stats?.invoicesChange ?? 0}
-            icon={FileText}
-            loading={statsLoading}
-          />
-          <MetricCard
-            title="Active Tenants"
-            value={stats?.activeTenants ?? 0}
-            change={stats?.tenantsChange ?? 0}
+            title="Teams"
+            value={stats?.totalTeams ?? 0}
+            change={stats?.teamsChange ?? 0}
             icon={Users}
             loading={statsLoading}
           />
         </div>
       )}
 
-      {/* Revenue Chart */}
-      {revenueLoading ? (
-        <ChartSkeleton />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Daily revenue for the last 30 days {revenueError && '(using mock data)'}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={Array.isArray(revenueData) ? revenueData : []}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="date"
-                  className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                />
-                <YAxis
-                  className="text-xs"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#635BFF"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#635BFF' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Invoices Table */}
-      {invoicesLoading ? (
+      {/* Recent Deployments Table */}
+      {deploymentsLoading ? (
         <TableSkeleton />
-      ) : invoicesError ? (
+      ) : deploymentsError ? (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
+            <CardTitle>Recent Deployments</CardTitle>
           </CardHeader>
           <CardContent>
             <ErrorState
-              message={(invoicesError as Error).message}
-              onRetry={() => refetchInvoices()}
+              message={(deploymentsError as Error).message}
+              onRetry={() => refetchDeployments()}
             />
           </CardContent>
         </Card>
-      ) : !invoices || invoices.length === 0 ? (
+      ) : !deployments || deployments.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
+            <CardTitle>Recent Deployments</CardTitle>
           </CardHeader>
           <CardContent>
-            <EmptyState message="No invoices have been created yet." />
+            <EmptyState message="No deployments have been created yet." />
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
+            <CardTitle>Recent Deployments</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Latest 5 invoices from your tenants
+              Latest 5 deployments across all services
             </p>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Environment</TableHead>
+                  <TableHead>Region</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Deployed By</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-mono text-xs">
-                      {invoice.id.slice(0, 8)}...
+                {deployments.map((deployment) => (
+                  <TableRow key={deployment.id}>
+                    <TableCell className="font-medium">
+                      {deployment.serviceName || deployment.serviceId.slice(0, 8)}
                     </TableCell>
-                    <TableCell className="font-medium">{invoice.tenantName}</TableCell>
-                    <TableCell>{formatCurrency(invoice.amount)}</TableCell>
-                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {deployment.environment}
+                    </TableCell>
+                    <TableCell className="text-sm">{deployment.awsRegion}</TableCell>
+                    <TableCell>{getDeploymentStatusBadge(deployment.status)}</TableCell>
+                    <TableCell className="text-sm">{deployment.deployedBy}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(invoice.createdAt).toLocaleDateString('en-US', {
+                      {new Date(deployment.deployedAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',

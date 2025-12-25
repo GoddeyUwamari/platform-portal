@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CreditCard, FileText, Banknote, Wallet, RefreshCcw, Activity, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Layers, Rocket, Server, Activity, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -15,12 +15,10 @@ import { useAuth } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Tenants', href: '/tenants', icon: Users },
-  { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard },
-  { name: 'Invoices', href: '/invoices', icon: FileText },
-  { name: 'Payments', href: '/payments', icon: Banknote },
-  { name: 'Payment Methods', href: '/payment-methods', icon: Wallet },
-  { name: 'Refunds', href: '/refunds', icon: RefreshCcw },
+  { name: 'Services', href: '/services', icon: Layers },
+  { name: 'Deployments', href: '/deployments', icon: Rocket },
+  { name: 'Infrastructure', href: '/infrastructure', icon: Server },
+  { name: 'Teams', href: '/teams', icon: Users },
   { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
 ]
 
@@ -53,7 +51,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-60 bg-[#0A2540] flex flex-col">
       {/* Logo/Brand */}
       <div className="h-16 flex items-center px-6 border-b border-white/10">
-        <h1 className="text-xl font-bold text-white">CloudBill</h1>
+        <h1 className="text-xl font-bold text-white">Platform Portal</h1>
       </div>
 
       {/* Navigation */}

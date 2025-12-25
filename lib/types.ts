@@ -376,3 +376,181 @@ export interface SystemHealth {
   services: ServiceHealth[];
   lastUpdate: string;
 }
+
+// =====================================================
+// PLATFORM ENGINEERING PORTAL TYPES
+// =====================================================
+
+// Service Types
+export type ServiceTemplate = 'api' | 'microservices';
+export type ServiceStatus = 'active' | 'inactive' | 'deploying' | 'failed';
+
+export interface Service {
+  id: string;
+  name: string;
+  template: ServiceTemplate;
+  owner: string;
+  teamId: string;
+  githubUrl?: string;
+  status: ServiceStatus;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateServicePayload {
+  name: string;
+  template: ServiceTemplate;
+  owner: string;
+  teamId: string;
+  githubUrl?: string;
+  description?: string;
+}
+
+export interface UpdateServicePayload {
+  name?: string;
+  status?: ServiceStatus;
+  githubUrl?: string;
+  description?: string;
+}
+
+// Deployment Types
+export type DeploymentEnvironment = 'development' | 'staging' | 'production';
+export type DeploymentStatus = 'running' | 'stopped' | 'failed' | 'deploying';
+
+export interface Deployment {
+  id: string;
+  serviceId: string;
+  serviceName?: string; // Joined from services table
+  environment: DeploymentEnvironment;
+  awsRegion: string;
+  status: DeploymentStatus;
+  costEstimate: number;
+  deployedBy: string;
+  deployedAt: string;
+  resources?: Record<string, unknown>;
+  logs?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDeploymentPayload {
+  serviceId: string;
+  environment: DeploymentEnvironment;
+  awsRegion: string;
+  deployedBy: string;
+  resources?: Record<string, unknown>;
+}
+
+// Infrastructure Types
+export type ResourceType = 'ec2' | 'rds' | 'vpc' | 's3' | 'lambda' | 'cloudfront' | 'elb';
+export type ResourceStatus = 'running' | 'stopped' | 'terminated' | 'pending';
+
+export interface InfrastructureResource {
+  id: string;
+  serviceId: string;
+  serviceName?: string; // Joined from services table
+  resourceType: ResourceType;
+  awsId: string;
+  awsRegion: string;
+  status: ResourceStatus;
+  costPerMonth: number;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInfrastructurePayload {
+  serviceId: string;
+  resourceType: ResourceType;
+  awsId: string;
+  awsRegion: string;
+  costPerMonth?: number;
+  metadata?: Record<string, unknown>;
+}
+
+// Team Types
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  members: string[];
+  slackChannel?: string;
+  owner: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTeamPayload {
+  name: string;
+  description?: string;
+  members?: string[];
+  slackChannel?: string;
+  owner: string;
+}
+
+export interface UpdateTeamPayload {
+  name?: string;
+  description?: string;
+  members?: string[];
+  slackChannel?: string;
+}
+
+// Platform Dashboard Stats
+export interface PlatformDashboardStats {
+  totalServices: number;
+  servicesChange: number;
+  activeDeployments: number;
+  deploymentsChange: number;
+  monthlyAwsCost: number;
+  costChange: number;
+  totalTeams: number;
+  teamsChange: number;
+}
+
+// Cost Metrics
+export interface CostMetrics {
+  totalMonthlyCost: number;
+  costByService: Array<{
+    serviceId: string;
+    serviceName: string;
+    cost: number;
+  }>;
+  costByResourceType: Array<{
+    resourceType: ResourceType;
+    cost: number;
+    count: number;
+  }>;
+  costByRegion: Array<{
+    region: string;
+    cost: number;
+  }>;
+}
+
+// Service Filters
+export interface ServiceFilters {
+  status?: ServiceStatus;
+  template?: ServiceTemplate;
+  owner?: string;
+  search?: string;
+}
+
+// Deployment Filters
+export interface DeploymentFilters {
+  serviceId?: string;
+  environment?: DeploymentEnvironment;
+  status?: DeploymentStatus;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Infrastructure Filters
+export interface InfrastructureFilters {
+  serviceId?: string;
+  resourceType?: ResourceType;
+  status?: ResourceStatus;
+  awsRegion?: string;
+}

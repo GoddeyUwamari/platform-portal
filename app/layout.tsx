@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CloudBill Dashboard",
-  description: "Multi-tenant SaaS billing platform",
+  title: "Platform Portal",
+  description: "Internal Developer Portal for Platform Engineering Toolkit",
 };
 
 export default function RootLayout({
