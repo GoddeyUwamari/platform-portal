@@ -1,59 +1,93 @@
 # Platform Portal
 
-Internal Developer Portal for the [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit) - A production-ready monorepo with Next.js 15 frontend and Express.js backend for managing services, deployments, and AWS infrastructure.
+<div align="center">
 
-![Dashboard](docs/screenshots/01-dashboard.png)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/GoddeyUwamari/platform-portal?style=for-the-badge)
 
-## 🎯 What is This?
+**The developer portal for platform engineering teams**
 
-A complete platform engineering solution that provides visibility and management for services created via the Platform CLI. Track deployments, monitor AWS resources, and manage costs—all from a beautiful web dashboard.
+Track services, deployments, and AWS infrastructure from a beautiful dashboard.
+
+[Live Demo](#) • [Documentation](#quick-start) • [Get Started](#installation)
+
+</div>
+
+![Dashboard Preview](docs/screenshots/01-dashboard.png)
+
+---
+
+## 🎯 Built For
+
+- **Startups** scaling from 5 to 50+ engineers
+- **Platform teams** managing 10-100+ microservices  
+- **DevOps engineers** tracking AWS costs and deployments
+- **Engineering managers** needing service visibility
+
+## ⭐ Why Platform Portal?
+
+✅ **2 minutes to deploy** - Not 2 weeks like Backstage  
+✅ **Beautiful UI** - Vercel-quality design, not enterprise gray  
+✅ **AWS-native** - Purpose-built for AWS infrastructure  
+✅ **Open source** - Free forever, no vendor lock-in  
+✅ **Production-ready** - Built with enterprise patterns from day 1
+
+---
 
 ## ✨ Features
 
 ### 🎨 Modern Vercel-Inspired UI
 - **Horizontal Navigation** - Clean, modern top navigation bar
-- **Command Palette (⌘K)** - Quick search and navigation across all resources
-- **Quick Actions Menu** - One-click access to create services, deployments, and infrastructure
-- **Responsive Design** - Mobile-friendly with adaptive layouts
-- **Smooth Animations** - Polished transitions and hover effects
+- **Command Palette (⌘K)** - Spotlight-style search across all resources
+- **Quick Actions Menu** - One-click create services, deployments, infrastructure
+- **Responsive Design** - Beautiful on desktop, tablet, and mobile
+- **Smooth Animations** - Polished transitions and micro-interactions
 - **Beautiful Empty States** - Helpful guidance when no data exists
 
-### 📊 Dashboard
-- Real-time platform metrics (services, deployments, costs)
-- Recent deployment history
-- Service health overview
-- Monthly AWS cost tracking
-- Error boundaries for resilient UI
+### 📊 Comprehensive Dashboard
+- Real-time platform metrics (6 services, 5 deployments, $1,675 AWS costs)
+- Recent deployment history across all environments
+- Service health scores and status tracking
+- Monthly AWS cost breakdown with trend analysis
+- Production-grade error handling with graceful fallbacks
 
 ### 🚀 Service Catalog
-- View all services created via CLI
-- Filter by template type (API, Microservices)
-- GitHub repository links
-- Service status tracking
-- Horizontal scroll for mobile tables
+- Track all services created via Platform CLI
+- Filter by template (API, Microservices), status, owner
+- Direct GitHub repository links
+- Service metadata and descriptions
+- Mobile-optimized tables with horizontal scroll
 
 ![Services](docs/screenshots/02-services.png)
 
-### 🔄 Deployment History
-- Track deployments across environments (dev, staging, production)
-- Deployment status and cost estimates
-- AWS region information
-- Deployed by user tracking
+### 🔄 Deployment Tracking
+- Complete deployment history (dev, staging, production)
+- Real-time deployment status (Running, Deploying, Failed)
+- AWS region distribution and cost estimates per deployment
+- Deployment timeline and user attribution
+- Environment-based filtering
 
 ![Deployments](docs/screenshots/03-deployments.png)
 
 ### ☁️ Infrastructure Monitoring
-- AWS resource tracking (EC2, RDS, S3, Lambda, VPC, CloudFront, ELB)
-- Monthly cost breakdown per resource
-- Resource status monitoring
-- Filter by resource type
+- AWS resource inventory (EC2, RDS, S3, Lambda, VPC, CloudFront, ELB)
+- Monthly cost breakdown: **$1,675 total** across 12 resources
+- Resource status monitoring (Running, Stopped, Terminated)
+- Filter by resource type for focused analysis
+- Service-to-infrastructure mapping
 
 ![Infrastructure](docs/screenshots/04-infrastructure.png)
 
-### 👥 Teams & Monitoring
-- Team management and service ownership
-- System health monitoring
-- Service uptime tracking
+### 👥 Team Management & System Health
+- Team-based service ownership
+- Member management and Slack integration
+- System health monitoring (API, Database, Frontend)
+- Service uptime tracking and alerts
+
+---
 
 ## 🏗️ Architecture
 
@@ -62,87 +96,100 @@ A complete platform engineering solution that provides visibility and management
 platform-portal/
 ├── backend/              # Express.js + TypeScript API
 │   ├── src/
-│   │   ├── config/      # Database configuration
-│   │   ├── controllers/ # Request handlers
-│   │   ├── middleware/  # Express middleware
-│   │   ├── repositories/# Data access layer
-│   │   ├── routes/      # API routes
-│   │   ├── types/       # TypeScript types
-│   │   └── server.ts    # Express app
+│   │   ├── config/      # Database & environment config
+│   │   ├── controllers/ # Business logic handlers
+│   │   ├── middleware/  # Auth, CORS, error handling
+│   │   ├── repositories/# Data access layer (Repository Pattern)
+│   │   ├── routes/      # API route definitions
+│   │   ├── validators/  # Zod validation schemas
+│   │   ├── utils/       # Custom error classes
+│   │   └── server.ts    # Express app entry point
 │   ├── package.json
 │   └── tsconfig.json
-├── app/                 # Next.js 15 frontend
+├── app/                 # Next.js 15 App Router
 ├── components/          # React components
+│   ├── layout/         # Navigation, headers
+│   ├── ui/             # Shadcn components
+│   └── error-boundary.tsx
 ├── lib/                 # Frontend utilities
-├── database/            # PostgreSQL migrations & seeds
+│   └── services/       # API client layer
+├── database/            # PostgreSQL setup
+│   ├── migrations/     # Schema migrations
+│   └── seeds/          # Sample data
 └── package.json         # Root workspace config
 ```
 
 ### Tech Stack
 
 **Frontend:**
-- Next.js 15 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- Radix UI components
-- React Query (data fetching)
-- Zustand (state management)
-- cmdk (Command Palette)
-- sonner (Toast Notifications)
-- date-fns (Date Formatting)
+- **Next.js 15** - App Router with React Server Components
+- **React 19** - Latest features and performance
+- **TypeScript 5** - Strict type safety
+- **Tailwind CSS v4** - Utility-first styling
+- **Radix UI** - Accessible component primitives
+- **React Query** - Server state management
+- **Zustand** - Client state management
+- **cmdk** - Command palette (⌘K)
+- **sonner** - Toast notifications
+- **date-fns** - Date formatting
 
 **Backend:**
-- Express.js
-- TypeScript
-- PostgreSQL
-- Node.js 20+
-- Zod (Validation)
-- Custom Error Handling
-- Repository Pattern
+- **Express.js** - Fast, minimal web framework
+- **TypeScript** - End-to-end type safety
+- **PostgreSQL** - Relational database
+- **Node.js 20+** - Runtime
+- **Zod** - Schema validation
+- **Repository Pattern** - Clean architecture
+- **Custom Error Classes** - Production error handling
 
 **DevOps:**
-- Docker (PostgreSQL)
-- npm workspaces (monorepo)
-- Concurrent dev servers
+- **Docker** - PostgreSQL containerization
+- **npm workspaces** - Monorepo management
+- **Concurrent** - Run frontend + backend simultaneously
 
-## 🎯 New in Week 1-2 Enhancement
+---
+
+## 🎯 What's New in v2.0
 
 ### Week 1: Real Data Integration & Error Handling ✅
-- ✅ **Enhanced Error Handling** - Custom error classes (ValidationError, NotFoundError, DatabaseError)
-- ✅ **Backend Validation** - Zod schemas for all API endpoints
-- ✅ **Frontend Error Boundaries** - Graceful error handling in React
-- ✅ **Service Names Fix** - Proper JOIN queries (service names instead of IDs)
-- ✅ **Loading States** - Comprehensive skeletons across all pages
-- ✅ **Mobile Responsive** - Tables scroll horizontally on mobile
+- ✅ **Production Error Handling** - Custom error classes (ValidationError, NotFoundError, DatabaseError)
+- ✅ **Backend Validation** - Zod schemas validate all API requests
+- ✅ **React Error Boundaries** - Graceful degradation on component failures
+- ✅ **Service Name Resolution** - Proper SQL JOINs (displays "ml-service" not "eeeeeeee")
+- ✅ **Loading States** - Skeleton screens prevent layout shift
+- ✅ **Mobile First** - Responsive tables with horizontal scroll
 
-### Week 2: Vercel-Inspired UI Enhancements ✅
-- ✅ **Horizontal Navigation** - Modern top nav replacing sidebar
-- ✅ **Command Palette (⌘K)** - Spotlight-style search
-- ✅ **Quick Actions Dropdown** - One-click resource creation
-- ✅ **Enhanced Empty States** - Beautiful, actionable empty states
-- ✅ **Improved Typography** - Better spacing and readability
-- ✅ **Smooth Animations** - Polished transitions throughout
-- ✅ **Toast Notifications** - User feedback with sonner
+### Week 2: Vercel-Inspired UI Transformation ✅
+- ✅ **Horizontal Navigation** - Modern top nav (killed the sidebar!)
+- ✅ **Command Palette (⌘K)** - Instant search across services, deployments, infrastructure
+- ✅ **Quick Actions Dropdown** - "+" button for rapid resource creation
+- ✅ **Enhanced Empty States** - Beautiful illustrations with clear CTAs
+- ✅ **Improved Typography** - Larger headings, better spacing, readable text
+- ✅ **Smooth Animations** - Polished transitions and hover effects
+- ✅ **Toast Notifications** - Real-time user feedback with sonner
+
+**Impact:** 2000+ lines of production code, 8 new components, enterprise-grade UX
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
-- Docker (for PostgreSQL)
-- npm or yarn
+- **Node.js 20+**
+- **Docker** (for PostgreSQL)
+- **npm or yarn**
 
 ### Installation
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/GoddeyUwamari/platform-portal.git
 cd platform-portal
 
-# Install dependencies (root + backend)
+# 2. Install dependencies (root + backend)
 npm install
 
-# Start PostgreSQL
+# 3. Start PostgreSQL with Docker
 docker run -d \
   --name platform-postgres \
   -e POSTGRES_PASSWORD=postgres \
@@ -150,24 +197,24 @@ docker run -d \
   -p 5432:5432 \
   postgres:14
 
-# Run database migrations
+# 4. Run database migrations
 node database/migrate.js
 
-# Optional: Seed sample data
+# 5. (Optional) Load sample data
 psql -h localhost -U postgres -d platform_portal -f database/seeds/001_platform_seed.sql
 
-# Start both frontend and backend
+# 6. Start both frontend and backend
 npm run dev
 ```
 
-**Servers will start:**
-- Frontend: http://localhost:3010
-- Backend API: http://localhost:8080
-- Health check: http://localhost:8080/health
+**Your portal is now running:**
+- 🌐 Frontend: http://localhost:3010
+- 🔌 Backend API: http://localhost:8080
+- ❤️ Health check: http://localhost:8080/health
 
-### Development
+### Development Commands
 ```bash
-# Start both services
+# Start both services (recommended)
 npm run dev
 
 # Start frontend only
@@ -179,156 +226,265 @@ npm run dev:backend
 # Build for production
 npm run build
 
-# Start production servers
+# Run production servers
 npm start
 ```
 
-## 📡 API Endpoints
+---
 
-### Services
+## 📡 API Reference
+
+### Services API
 ```
-GET    /api/services              # List all services
-POST   /api/services              # Create service
-GET    /api/services/:id          # Get service by ID
+GET    /api/services              # List all services with filters
+POST   /api/services              # Create new service
+GET    /api/services/:id          # Get service details
 PUT    /api/services/:id          # Update service
 DELETE /api/services/:id          # Delete service
 ```
 
-### Deployments
-```
-GET    /api/deployments           # List deployments
-POST   /api/deployments           # Record deployment
-GET    /api/deployments/:id       # Get deployment details
-DELETE /api/deployments/:id       # Delete deployment
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "ml-service",
+      "template": "microservices",
+      "owner": "sarah@company.com",
+      "status": "active",
+      "github_url": "https://github.com/company/ml-service"
+    }
+  ]
+}
 ```
 
-### Infrastructure
+### Deployments API
+```
+GET    /api/deployments           # List deployment history
+POST   /api/deployments           # Record new deployment
+GET    /api/deployments/:id       # Deployment details
+DELETE /api/deployments/:id       # Delete deployment record
+```
+
+### Infrastructure API
 ```
 GET    /api/infrastructure        # List AWS resources
-POST   /api/infrastructure        # Add resource
-GET    /api/infrastructure/costs  # Cost breakdown
+POST   /api/infrastructure        # Add infrastructure resource
+GET    /api/infrastructure/costs  # Cost breakdown analysis
 ```
 
-### Platform Stats
+**Cost Breakdown Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "total_monthly_cost": 1675.00,
+    "by_service": [...],
+    "by_resource_type": [...],
+    "by_team": [...]
+  }
+}
+```
+
+### Platform Stats API
 ```
 GET    /api/platform/stats/dashboard  # Dashboard metrics
 ```
 
-### Teams
+### Teams API
 ```
-GET    /api/teams                 # List teams
-GET    /api/teams/:id/services    # Team's services
-POST   /api/teams                 # Create team
+GET    /api/teams                 # List all teams
+GET    /api/teams/:id/services    # Get team's services
+POST   /api/teams                 # Create new team
 ```
+
+---
 
 ## 🗄️ Database Schema
 ```sql
--- Teams
+-- Teams (Organization units)
 CREATE TABLE teams (
-  id UUID PRIMARY KEY,
-  name VARCHAR(255) UNIQUE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) UNIQUE NOT NULL,
   description TEXT,
-  owner VARCHAR(255),
+  owner VARCHAR(255) NOT NULL,
   members TEXT[],
+  slack_channel VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Services
+-- Services (Microservices catalog)
 CREATE TABLE services (
-  id UUID PRIMARY KEY,
-  name VARCHAR(255),
-  template VARCHAR(50),
-  owner VARCHAR(255),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  template VARCHAR(50) NOT NULL,
+  owner VARCHAR(255) NOT NULL,
   team_id UUID REFERENCES teams(id),
   github_url TEXT,
-  status VARCHAR(50),
+  status VARCHAR(50) DEFAULT 'active',
+  description TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Deployments
+-- Deployments (Deployment history)
 CREATE TABLE deployments (
-  id UUID PRIMARY KEY,
-  service_id UUID REFERENCES services(id),
-  environment VARCHAR(50),
-  aws_region VARCHAR(50),
-  status VARCHAR(50),
-  cost_estimate DECIMAL(10,2),
-  deployed_by VARCHAR(255),
-  deployed_at TIMESTAMP DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+  environment VARCHAR(50) NOT NULL,
+  aws_region VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL,
+  cost_estimate DECIMAL(10,2) DEFAULT 0.00,
+  deployed_by VARCHAR(255) NOT NULL,
+  deployed_at TIMESTAMP DEFAULT NOW(),
+  resources JSONB
 );
 
--- Infrastructure Resources
+-- Infrastructure Resources (AWS inventory)
 CREATE TABLE infrastructure_resources (
-  id UUID PRIMARY KEY,
-  service_id UUID REFERENCES services(id),
-  resource_type VARCHAR(50),
-  aws_id VARCHAR(255),
-  aws_region VARCHAR(50),
-  status VARCHAR(50),
-  cost_per_month DECIMAL(10,2),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+  resource_type VARCHAR(50) NOT NULL,
+  aws_id VARCHAR(255) NOT NULL,
+  aws_region VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL,
+  cost_per_month DECIMAL(10,2) DEFAULT 0.00,
+  metadata JSONB,
   created_at TIMESTAMP DEFAULT NOW()
 );
 ```
+
+---
 
 ## 🔗 Integration with Platform CLI
 
-The portal integrates seamlessly with the [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit):
+Seamless integration with the [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit):
 ```bash
-# CLI creates service and notifies portal
+# CLI creates service → Portal tracks it
 platform create api my-service --github
 
-# CLI deploys and records in portal
-platform deploy aws my-service
+# CLI deploys → Portal records deployment
+platform deploy aws my-service --env production
+
+# Portal automatically displays:
+# ✅ Service in catalog
+# ✅ Deployment in history
+# ✅ AWS resources in infrastructure
+# ✅ Costs in dashboard
 ```
+
+---
 
 ## 📸 Screenshots
 
+### Command Palette (⌘K)
+Press Cmd+K to instantly search across all resources
+![Command Palette](docs/screenshots/command-palette.png)
+
 ### Dashboard
+Real-time metrics and recent deployments
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
-### Services
+### Service Catalog
+All services with templates, owners, and GitHub links
 ![Services](docs/screenshots/02-services.png)
 
-### Deployments
+### Deployment History
+Track deployments across dev, staging, and production
 ![Deployments](docs/screenshots/03-deployments.png)
 
-### Infrastructure
+### Infrastructure Monitoring
+AWS resources with cost breakdown ($1,675/month)
 ![Infrastructure](docs/screenshots/04-infrastructure.png)
 
-### Teams
+### Teams & Monitoring
+Team management and system health
 ![Teams](docs/screenshots/05-teams.png)
-
-### Monitoring
 ![Monitoring](docs/screenshots/06-monitoring.png)
+
+---
+
+## 💼 For Businesses
+
+Need help implementing Platform Portal for your team?
+
+**Services Offered:**
+- 📞 **Free Consultation** - 30-minute discovery call
+- 💻 **Custom Implementation** - Starting at $5,000
+- 🎓 **Team Training** - $2,000/day workshop
+- 🏢 **Enterprise Support** - Custom SLA, priority fixes
+- 🔧 **Custom Development** - $150/hour for modifications
+
+**Contact:**  
+📧 goddey@wayuptech.com  
+🔗 [Schedule a Call](https://calendly.com/goddeyuwamari)  
+💼 [WayUP Technology](https://wayuptech.com)
+
+---
 
 ## 🤝 Contributing
 
-This is a portfolio project, but feedback and suggestions are welcome!
+Contributions welcome! This project follows standard open-source practices.
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
 
 ## 📝 License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details
+
+---
 
 ## 👤 Author
 
 **Goddey Uwamari**
 
-- 🏢 Founder & CEO, WayUP Technology
+- 🏢 Founder & CEO, [WayUP Technology](https://wayuptech.com)
 - 💼 Senior Full-Stack & Platform Engineer
+- 🎯 Target: Staff/Principal Engineer roles ($160K-350K+)
 - 🌐 GitHub: [@GoddeyUwamari](https://github.com/GoddeyUwamari)
 - 🔗 LinkedIn: [Goddey Uwamari](https://www.linkedin.com/in/goddeyuwamari)
+- 📧 Email: goddey@wayuptech.com
+- 📍 Location: Newark, NJ (NYC Metro)
+
+---
 
 ## 🙏 Acknowledgments
 
-- Built with Next.js 15, React 19, and Express.js
-- Inspired by modern platform engineering practices
-- Part of the Platform Engineering Toolkit ecosystem
+- **Design Inspiration:** [Vercel](https://vercel.com), [Backstage](https://backstage.io), [Grafana](https://grafana.com)
+- **Built With:** Next.js 15, React 19, Express.js, PostgreSQL
+- **UI Components:** Shadcn UI, Radix UI, Tailwind CSS
+- **Influenced By:** Modern platform engineering practices and developer experience principles
+
+---
 
 ## 🔗 Related Projects
 
-- [Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit) - CLI tool for service creation and AWS deployment
+- **[Platform Engineering Toolkit](https://github.com/GoddeyUwamari/platform-engineering-toolkit)** - CLI tool for automated service creation, GitHub integration, and AWS deployment with Terraform
+
+---
+
+## ⭐ Show Your Support
+
+If Platform Portal helped you, please:
+
+- ⭐ **Star this repository**
+- 🐦 **Share on Twitter/LinkedIn**
+- 💬 **Provide feedback** via issues
+- 🤝 **Contribute** improvements
+
+---
+
+<div align="center">
+
+**Built with ❤️ by platform engineers, for platform engineers**
+
+[⬆ Back to Top](#platform-portal)
+
+</div>
