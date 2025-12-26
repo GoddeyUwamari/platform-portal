@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
@@ -22,29 +21,29 @@ const navigation = [
   { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
 ]
 
+// Mock user data - authentication disabled
+const mockUser = {
+  firstName: 'Demo',
+  lastName: 'User',
+  email: 'demo@devcontrol.dev',
+}
+
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
-
-  const handleLogout = () => {
-    logout()
-  }
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user) return 'U'
-    const firstInitial = user.firstName?.charAt(0) || user.email.charAt(0)
-    const lastInitial = user.lastName?.charAt(0) || ''
+    const firstInitial = mockUser.firstName?.charAt(0) || mockUser.email.charAt(0)
+    const lastInitial = mockUser.lastName?.charAt(0) || ''
     return (firstInitial + lastInitial).toUpperCase()
   }
 
   // Get user display name
   const getUserName = () => {
-    if (!user) return 'User'
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`
+    if (mockUser.firstName && mockUser.lastName) {
+      return `${mockUser.firstName} ${mockUser.lastName}`
     }
-    return user.email
+    return mockUser.email
   }
 
   return (
@@ -91,15 +90,15 @@ export function Sidebar() {
               </Avatar>
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium text-white">{getUserName()}</p>
-                <p className="text-xs text-gray-400">{user?.email || ''}</p>
+                <p className="text-xs text-gray-400">{mockUser.email}</p>
               </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </DropdownMenuItem>
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium">{getUserName()}</p>
+              <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

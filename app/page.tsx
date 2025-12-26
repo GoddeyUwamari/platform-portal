@@ -7,12 +7,12 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    router.push('/login')
+    router.push('/dashboard')
   }, [router])
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <p className="text-lg">Redirecting to login...</p>
+      <p className="text-lg">Redirecting to dashboard...</p>
     </div>
   )
 }

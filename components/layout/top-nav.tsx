@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Layers, Rocket, Server, Users, Activity, Plus, Search } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -24,23 +23,28 @@ const navigation = [
   { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
 ]
 
+// Mock user data - authentication disabled
+const mockUser = {
+  firstName: 'Demo',
+  lastName: 'User',
+  email: 'demo@devcontrol.dev',
+}
+
 export function TopNav() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const router = useRouter()
 
   const getUserInitials = () => {
-    if (!user) return 'U'
-    const firstInitial = user.firstName?.charAt(0) || user.email.charAt(0)
-    const lastInitial = user.lastName?.charAt(0) || ''
+    const firstInitial = mockUser.firstName?.charAt(0) || mockUser.email.charAt(0)
+    const lastInitial = mockUser.lastName?.charAt(0) || ''
     return (firstInitial + lastInitial).toUpperCase()
   }
 
   const getUserName = () => {
-    if (!user) return 'User'
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`
+    if (mockUser.firstName && mockUser.lastName) {
+      return `${mockUser.firstName} ${mockUser.lastName}`
     }
-    return user.email
+    return mockUser.email
   }
 
   const handleSearchClick = () => {
@@ -61,9 +65,9 @@ export function TopNav() {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
             <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">P</span>
+              <span className="text-white text-sm font-bold">DC</span>
             </div>
-            <span className="hidden md:inline-block">Platform Portal</span>
+            <span className="hidden md:inline-block">DevControl</span>
           </Link>
 
           {/* Navigation Links - Hidden on mobile */}
@@ -125,20 +129,20 @@ export function TopNav() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/services/new')}>
                 <Layers className="mr-2 h-4 w-4" />
                 Create Service
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/deployments/new')}>
                 <Rocket className="mr-2 h-4 w-4" />
                 Record Deployment
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/infrastructure/new')}>
                 <Server className="mr-2 h-4 w-4" />
                 Add Infrastructure
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/teams/new')}>
                 <Users className="mr-2 h-4 w-4" />
                 Create Team
               </DropdownMenuItem>
@@ -160,12 +164,8 @@ export function TopNav() {
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium">{getUserName()}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">{mockUser.email}</p>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
-                Logout
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

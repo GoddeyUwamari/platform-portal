@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -179,7 +179,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-2">
-          Welcome back! Here's an overview of your billing analytics.
+          Welcome back! Here&apos;s an overview of your billing analytics.
         </p>
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, AlertCircle, Layers, Github } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -86,9 +87,7 @@ function EmptyState() {
       description="Deploy your first service to start tracking deployments and infrastructure. Services are the building blocks of your platform."
       action={{
         label: 'Create Service',
-        onClick: () => {
-          // Will be connected to create service flow
-        },
+        onClick: () => router.push('/services/new'),
       }}
       secondaryAction={{
         label: 'Learn More',
@@ -99,6 +98,7 @@ function EmptyState() {
 }
 
 export default function ServicesPage() {
+  const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   const { data: services = [], isLoading, error, refetch } = useQuery({
@@ -161,7 +161,7 @@ export default function ServicesPage() {
             Manage and monitor all platform services created via CLI
           </p>
         </div>
-        <Button className="w-full sm:w-auto">
+        <Button className="w-full sm:w-auto" onClick={() => router.push('/services/new')}>
           <Plus className="h-4 w-4 mr-2" />
           Create Service
         </Button>

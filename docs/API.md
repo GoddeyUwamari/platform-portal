@@ -1,0 +1,600 @@
+# DevControl API Documentation
+
+**Base URL:** `http://localhost:8080` (development)
+
+**Version:** 1.0.0
+
+## Table of Contents
+
+- [Authentication](#authentication)
+- [Services API](#services-api)
+- [Deployments API](#deployments-api)
+- [Infrastructure API](#infrastructure-api)
+- [Teams API](#teams-api)
+- [Platform Stats API](#platform-stats-api)
+- [Error Handling](#error-handling)
+
+---
+
+## Authentication
+
+**Status:** Not yet implemented
+
+Future versions will include authentication via:
+- JWT tokens
+- API keys for programmatic access
+
+---
+
+## Services API
+
+Manage platform services and applications.
+
+### List All Services
+
+```http
+GET /api/services
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | string | Filter by status: `active`, `inactive`, `deploying`, `failed` |
+| `template` | string | Filter by template: `api`, `frontend`, `worker`, `database` |
+| `team_id` | UUID | Filter by team ID |
+
+**Example Request:**
+```bash
+curl http://localhost:8080/api/services?status=active
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "user-api",
+      "template": "api",
+      "owner": "john.doe@example.com",
+      "team_id": "660e8400-e29b-41d4-a716-446655440000",
+      "github_url": "https://github.com/company/user-api",
+      "status": "active",
+      "description": "User management API service",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+### Get Service by ID
+
+```http
+GET /api/services/:id
+```
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | UUID | Service ID |
+
+**Example Request:**
+```bash
+curl http://localhost:8080/api/services/550e8400-e29b-41d4-a716-446655440000
+```
+
+### Create Service
+
+```http
+POST /api/services
+```
+
+**Request Body:**
+```json
+{
+  "name": "user-api",
+  "template": "api",
+  "owner": "john.doe@example.com",
+  "team_id": "660e8400-e29b-41d4-a716-446655440000",
+  "github_url": "https://github.com/company/user-api",
+  "description": "User management API service"
+}
+```
+
+**Validation Rules:**
+- `name`: Required, 1-255 characters
+- `template`: Required, must be one of: `api`, `frontend`, `worker`, `database`
+- `owner`: Required, valid email address
+- `team_id`: Required, valid UUID
+- `github_url`: Optional, valid URL
+- `description`: Optional, max 500 characters
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "user-api",
+    "template": "api",
+    "owner": "john.doe@example.com",
+    "team_id": "660e8400-e29b-41d4-a716-446655440000"
+  }'
+```
+
+### Update Service
+
+```http
+PUT /api/services/:id
+```
+
+**Request Body:**
+```json
+{
+  "name": "user-api-v2",
+  "status": "active",
+  "github_url": "https://github.com/company/user-api-v2",
+  "description": "Updated user management API"
+}
+```
+
+**Note:** All fields are optional in updates.
+
+### Delete Service
+
+```http
+DELETE /api/services/:id
+```
+
+---
+
+## Deployments API
+
+Track service deployments across environments.
+
+### List All Deployments
+
+```http
+GET /api/deployments
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `service_id` | UUID | Filter by service |
+| `environment` | string | Filter by environment: `development`, `staging`, `production` |
+| `status` | string | Filter by status: `running`, `stopped`, `deploying`, `failed` |
+| `limit` | integer | Limit results (1-100) |
+| `offset` | integer | Offset for pagination |
+
+**Example Request:**
+```bash
+curl http://localhost:8080/api/deployments?environment=production&limit=10
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440000",
+      "service_id": "550e8400-e29b-41d4-a716-446655440000",
+      "service_name": "user-api",
+      "environment": "production",
+      "aws_region": "us-east-1",
+      "status": "running",
+      "cost_estimate": 125.50,
+      "deployed_by": "john.doe@example.com",
+      "deployed_at": "2024-01-20T14:30:00Z",
+      "resources": {
+        "ec2": ["i-1234567890abcdef0"],
+        "rds": ["mydb-instance"]
+      },
+      "created_at": "2024-01-20T14:30:00Z",
+      "updated_at": "2024-01-20T14:30:00Z"
+    }
+  ]
+}
+```
+
+### Get Deployment by ID
+
+```http
+GET /api/deployments/:id
+```
+
+### Create Deployment
+
+```http
+POST /api/deployments
+```
+
+**Request Body:**
+```json
+{
+  "service_id": "550e8400-e29b-41d4-a716-446655440000",
+  "environment": "production",
+  "aws_region": "us-east-1",
+  "status": "deploying",
+  "cost_estimate": 125.50,
+  "deployed_by": "john.doe@example.com",
+  "resources": {
+    "ec2": ["i-1234567890abcdef0"]
+  }
+}
+```
+
+**Validation Rules:**
+- `service_id`: Required, valid UUID
+- `environment`: Required, must be: `development`, `staging`, or `production`
+- `aws_region`: Required, valid AWS region format (e.g., `us-east-1`)
+- `status`: Required, must be: `running`, `stopped`, `deploying`, or `failed`
+- `cost_estimate`: Optional, non-negative number
+- `deployed_by`: Required, valid email
+- `resources`: Optional, JSON object
+
+### Delete Deployment
+
+```http
+DELETE /api/deployments/:id
+```
+
+---
+
+## Infrastructure API
+
+Manage AWS infrastructure resources.
+
+### List All Resources
+
+```http
+GET /api/infrastructure
+```
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `service_id` | UUID | Filter by service |
+| `resource_type` | string | Filter by type: `ec2`, `rds`, `vpc`, `s3`, `lambda`, `cloudfront`, `elb` |
+| `status` | string | Filter by status: `running`, `stopped`, `terminated`, `pending` |
+| `aws_region` | string | Filter by AWS region |
+
+**Example Request:**
+```bash
+curl http://localhost:8080/api/infrastructure?resource_type=ec2&status=running
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440000",
+      "service_id": "550e8400-e29b-41d4-a716-446655440000",
+      "service_name": "user-api",
+      "resource_type": "ec2",
+      "aws_id": "i-1234567890abcdef0",
+      "aws_region": "us-east-1",
+      "status": "running",
+      "cost_per_month": 75.00,
+      "metadata": {
+        "instance_type": "t3.medium",
+        "availability_zone": "us-east-1a"
+      },
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+### Get Resource by ID
+
+```http
+GET /api/infrastructure/:id
+```
+
+### Create Infrastructure Resource
+
+```http
+POST /api/infrastructure
+```
+
+**Request Body:**
+```json
+{
+  "service_id": "550e8400-e29b-41d4-a716-446655440000",
+  "resource_type": "ec2",
+  "aws_id": "i-1234567890abcdef0",
+  "aws_region": "us-east-1",
+  "status": "running",
+  "cost_per_month": 75.00,
+  "metadata": {
+    "instance_type": "t3.medium"
+  }
+}
+```
+
+**Validation Rules:**
+- `service_id`: Required, valid UUID
+- `resource_type`: Required, must be one of: `ec2`, `rds`, `vpc`, `s3`, `lambda`, `cloudfront`, `elb`
+- `aws_id`: Required, string
+- `aws_region`: Required, valid AWS region format
+- `status`: Required, must be: `running`, `stopped`, or `terminated`
+- `cost_per_month`: Required, non-negative number
+- `metadata`: Optional, JSON object
+
+### Get Cost Breakdown
+
+```http
+GET /api/infrastructure/costs
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "total_monthly_cost": 450.00,
+    "by_service": [
+      {
+        "service_name": "user-api",
+        "cost": 175.00
+      },
+      {
+        "service_name": "payment-service",
+        "cost": 275.00
+      }
+    ],
+    "by_resource_type": [
+      {
+        "resource_type": "ec2",
+        "cost": 250.00
+      },
+      {
+        "resource_type": "rds",
+        "cost": 200.00
+      }
+    ],
+    "by_team": [
+      {
+        "team_name": "Backend Team",
+        "cost": 300.00
+      }
+    ]
+  }
+}
+```
+
+### Delete Resource
+
+```http
+DELETE /api/infrastructure/:id
+```
+
+---
+
+## Teams API
+
+Manage development teams.
+
+### List All Teams
+
+```http
+GET /api/teams
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440000",
+      "name": "Backend Team",
+      "description": "Handles all backend services",
+      "owner": "team-lead@example.com",
+      "members": [
+        "dev1@example.com",
+        "dev2@example.com"
+      ],
+      "slack_channel": "#backend-team",
+      "created_at": "2024-01-10T09:00:00Z",
+      "updated_at": "2024-01-10T09:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Team by ID
+
+```http
+GET /api/teams/:id
+```
+
+### Create Team
+
+```http
+POST /api/teams
+```
+
+**Request Body:**
+```json
+{
+  "name": "Backend Team",
+  "description": "Handles all backend services",
+  "owner": "team-lead@example.com",
+  "members": ["dev1@example.com"],
+  "slack_channel": "#backend-team"
+}
+```
+
+**Validation Rules:**
+- `name`: Required, 1-255 characters
+- `owner`: Required, valid email
+- `description`: Optional, max 500 characters
+- `members`: Optional, array of email strings
+- `slack_channel`: Optional, string
+
+### Update Team
+
+```http
+PUT /api/teams/:id
+```
+
+### Delete Team
+
+```http
+DELETE /api/teams/:id
+```
+
+### Get Team's Services
+
+```http
+GET /api/teams/:id/services
+```
+
+Returns all services owned by the team.
+
+---
+
+## Platform Stats API
+
+Get dashboard statistics and metrics.
+
+### Get Dashboard Stats
+
+```http
+GET /api/platform/stats
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalServices": 12,
+    "servicesChange": 5.5,
+    "activeDeployments": 8,
+    "deploymentsChange": 10.2,
+    "monthlyAwsCost": 1250.00,
+    "costChange": -3.5,
+    "totalTeams": 4,
+    "teamsChange": 0
+  }
+}
+```
+
+**Response Fields:**
+- `totalServices`: Total number of services
+- `servicesChange`: Percentage change vs. last month
+- `activeDeployments`: Number of running deployments
+- `deploymentsChange`: Percentage change vs. last month
+- `monthlyAwsCost`: Total AWS costs (USD)
+- `costChange`: Percentage change vs. last month
+- `totalTeams`: Number of teams
+- `teamsChange`: Percentage change vs. last month
+
+---
+
+## Error Handling
+
+### Error Response Format
+
+All errors follow this structure:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed for the request",
+    "details": [
+      {
+        "field": "email",
+        "message": "Must be a valid email address"
+      }
+    ]
+  }
+}
+```
+
+### HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | Success |
+| `201` | Created successfully |
+| `400` | Bad Request (validation error) |
+| `404` | Not Found |
+| `500` | Internal Server Error |
+
+### Common Error Codes
+
+| Code | Description |
+|------|-------------|
+| `VALIDATION_ERROR` | Request validation failed |
+| `NOT_FOUND` | Resource not found |
+| `DATABASE_ERROR` | Database operation failed |
+| `INTERNAL_ERROR` | Unexpected server error |
+
+---
+
+## Rate Limiting
+
+**Status:** Not yet implemented
+
+Future versions will include rate limiting:
+- 100 requests per minute per IP
+- Authenticated users: 1000 requests per minute
+
+---
+
+## Pagination
+
+For endpoints that return lists, use:
+
+```http
+GET /api/services?limit=20&offset=40
+```
+
+- `limit`: Number of items per page (default: 50, max: 100)
+- `offset`: Number of items to skip
+
+Response includes total count:
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "total": 150,
+    "limit": 20,
+    "offset": 40
+  }
+}
+```
+
+---
+
+## Changelog
+
+### v1.0.0 (2025-01-15)
+- Initial API release
+- Services, Deployments, Infrastructure, Teams endpoints
+- Platform statistics
+- Cost tracking
+
+---
+
+## Support
+
+- **GitHub Issues:** [github.com/GoddeyUwamari/devcontrol/issues](https://github.com/GoddeyUwamari/devcontrol/issues)
+- **Email:** projectmanager@wayuptechn.com
+- **Documentation:** Check `/docs` folder for additional guides
+
+---
+
+**Happy Building!** 🚀

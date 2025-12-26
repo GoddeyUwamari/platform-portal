@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/hooks/useAuth'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -18,9 +17,15 @@ const pageTitles: Record<string, string> = {
   '/invoices': 'Invoices',
 }
 
+// Mock user data - authentication disabled
+const mockUser = {
+  firstName: 'Demo',
+  lastName: 'User',
+  email: 'demo@devcontrol.dev',
+}
+
 export function Header() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
 
   // Get the page title based on the current route
   const getPageTitle = () => {
@@ -39,15 +44,10 @@ export function Header() {
     return 'Dashboard'
   }
 
-  const handleLogout = () => {
-    logout()
-  }
-
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user) return 'U'
-    const firstInitial = user.firstName?.charAt(0) || user.email.charAt(0)
-    const lastInitial = user.lastName?.charAt(0) || ''
+    const firstInitial = mockUser.firstName?.charAt(0) || mockUser.email.charAt(0)
+    const lastInitial = mockUser.lastName?.charAt(0) || ''
     return (firstInitial + lastInitial).toUpperCase()
   }
 
@@ -70,10 +70,10 @@ export function Header() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </DropdownMenuItem>
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium">{mockUser.firstName} {mockUser.lastName}</p>
+              <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

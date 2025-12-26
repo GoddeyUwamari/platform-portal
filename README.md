@@ -87,6 +87,16 @@ Track services, deployments, and AWS infrastructure from a beautiful dashboard.
 - System health monitoring (API, Database, Frontend)
 - Service uptime tracking and alerts
 
+### ✅ Production-Grade Form Validation
+- **Comprehensive Zod Schemas** - Type-safe validation for all forms
+- **Real-time Validation** - Instant feedback as users type
+- **Beautiful Error Messages** - Clear, actionable validation errors
+- **Service Creation Form** - Create services with team selection, templates, GitHub integration
+- **Deployment Form** - Deploy to any environment with AWS region selection
+- **Infrastructure Form** - Track AWS resources with cost estimates
+- **Loading States** - Smooth loading indicators with toast notifications
+- **Graceful Error Handling** - User-friendly error messages throughout
+
 ---
 
 ## 🏗️ Architecture
@@ -439,6 +449,14 @@ Contributions welcome! This project follows standard open-source practices.
 ## 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details
+
+---
+
+## 📚 Documentation
+
+- **[API Documentation](docs/API.md)** - Complete REST API reference with examples
+- **[Contributing Guide](CONTRIBUTING.md)** - Guidelines for contributing to DevControl
+- **[Architecture Overview](#architecture)** - System design and technical decisions
 
 ---
 

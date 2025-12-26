@@ -16,12 +16,10 @@ import {
   type UpdateProfilePayload,
   type ChangePasswordPayload,
 } from '@/lib/services/user.service';
-import { useAuth } from '@/hooks/useAuth';
 import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuth();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -29,7 +27,6 @@ export default function ProfilePage() {
   const { data: user, isLoading } = useQuery({
     queryKey: ['user-profile'],
     queryFn: userService.getProfile,
-    initialData: authUser || undefined,
   });
 
   // Profile form
@@ -59,9 +56,6 @@ export default function ProfilePage() {
     mutationFn: userService.updateProfile,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      // Update auth store with new user data
-      const authStore = useAuth.getState();
-      authStore.setUser({ ...authStore.user!, ...data });
       toast.success('Profile updated successfully');
       setIsEditingProfile(false);
     },
