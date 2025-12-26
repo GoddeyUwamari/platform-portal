@@ -4,6 +4,7 @@ import deploymentsRoutes from './deployments.routes';
 import infrastructureRoutes from './infrastructure.routes';
 import teamsRoutes from './teams.routes';
 import platformRoutes from './platform.routes';
+import awsRoutes from './aws.routes';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use('/deployments', deploymentsRoutes);
 router.use('/infrastructure', infrastructureRoutes);
 router.use('/teams', teamsRoutes);
 router.use('/platform', platformRoutes);
+router.use('/aws', awsRoutes);
 
 // API root
 router.get('/', (req, res) => {
@@ -26,6 +28,7 @@ router.get('/', (req, res) => {
       infrastructure: '/api/infrastructure',
       teams: '/api/teams',
       platform: '/api/platform',
+      aws: '/api/aws',
     },
   });
 });

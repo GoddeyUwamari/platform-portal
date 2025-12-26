@@ -1,4 +1,5 @@
 import { Registry, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom-client'
+import awsCostService from '../services/aws-cost.service'
 
 export const register = new Registry()
 
@@ -48,7 +49,7 @@ export const infrastructureCostTotal = new Gauge({
   registers: [register],
 })
 
-// Update business metrics from database
+// Update business metrics from database and AWS
 export async function updateBusinessMetrics(dbPool: any) {
   try {
     // Services
@@ -64,15 +65,37 @@ export async function updateBusinessMetrics(dbPool: any) {
       servicesActive.set(Number(services.rows[0].active))
     }
 
-    // Infrastructure cost
-    const infra = await dbPool.query(`
-      SELECT COALESCE(SUM(cost_per_month), 0) as total_cost
-      FROM infrastructure_resources
-      WHERE status = 'Running'
-    `)
+    // Infrastructure cost - Try AWS first, fallback to database
+    try {
+      const awsCosts = await awsCostService.fetchMonthlyCosts()
+      if (awsCosts.total > 0) {
+        // Use real AWS costs if available
+        infrastructureCostTotal.set(awsCosts.total)
+        console.log(`Updated infrastructure cost from AWS: $${awsCosts.total.toFixed(2)}`)
+      } else {
+        // Fallback to database costs
+        const infra = await dbPool.query(`
+          SELECT COALESCE(SUM(cost_per_month), 0) as total_cost
+          FROM infrastructure_resources
+          WHERE status = 'Running'
+        `)
 
-    if (infra.rows.length > 0) {
-      infrastructureCostTotal.set(Number(infra.rows[0].total_cost))
+        if (infra.rows.length > 0) {
+          infrastructureCostTotal.set(Number(infra.rows[0].total_cost))
+        }
+      }
+    } catch (awsError) {
+      // If AWS fetch fails, use database costs
+      console.log('AWS costs unavailable, using database costs')
+      const infra = await dbPool.query(`
+        SELECT COALESCE(SUM(cost_per_month), 0) as total_cost
+        FROM infrastructure_resources
+        WHERE status = 'Running'
+      `)
+
+      if (infra.rows.length > 0) {
+        infrastructureCostTotal.set(Number(infra.rows[0].total_cost))
+      }
     }
   } catch (error) {
     console.error('Error updating metrics:', error)
