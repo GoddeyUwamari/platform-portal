@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { InfrastructureRepository } from '../repositories/infrastructure.repository';
 import { CreateInfrastructureRequest, InfrastructureFilters, ApiResponse } from '../types';
+import awsCostService from '../services/aws-cost.service';
+import { pool } from '../config/database';
 
 const repository = new InfrastructureRepository();
 
@@ -143,6 +145,126 @@ export class InfrastructureController {
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch cost breakdown',
+      };
+      res.status(500).json(response);
+    }
+  }
+
+  async syncAWS(req: Request, res: Response): Promise<void> {
+    try {
+      // Check if AWS credentials are configured
+      const isConfigured = process.env.AWS_ACCESS_KEY_ID &&
+                          process.env.AWS_SECRET_ACCESS_KEY &&
+                          process.env.AWS_REGION;
+
+      if (!isConfigured) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'AWS credentials not configured. Please set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION in environment variables.',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      // Fetch monthly costs from AWS Cost Explorer
+      let awsCosts;
+      try {
+        awsCosts = await awsCostService.fetchMonthlyCosts();
+      } catch (error: any) {
+        // Check if it's a Cost Explorer not enabled error
+        if (error.message && error.message.includes('not enabled')) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'AWS Cost Explorer is not enabled. Please enable it in your AWS account.',
+          };
+          res.status(503).json(response);
+          return;
+        }
+
+        // Generic AWS API error
+        console.error('AWS API error:', error);
+        const response: ApiResponse = {
+          success: false,
+          error: `AWS API error: ${error.message || 'Unknown error'}`,
+        };
+        res.status(502).json(response);
+        return;
+      }
+
+      // Update or insert AWS cost total in database
+      const awsId = 'cost-explorer-total';
+      const resourceType = 'AWS_COST_TOTAL';
+
+      // Check if record exists
+      const existingRecord = await pool.query(
+        'SELECT id FROM infrastructure_resources WHERE aws_id = $1 AND resource_type = $2',
+        [awsId, resourceType]
+      );
+
+      const now = new Date();
+      let resourcesSynced = 0;
+
+      if (existingRecord.rows.length > 0) {
+        // Update existing record
+        await pool.query(
+          `UPDATE infrastructure_resources
+           SET cost_per_month = $1, status = $2, updated_at = $3, metadata = $4
+           WHERE aws_id = $5 AND resource_type = $6`,
+          [
+            awsCosts.total,
+            'Active',
+            now,
+            JSON.stringify({
+              last_synced_at: now.toISOString(),
+              period: awsCosts.period,
+              by_service: awsCosts.byService,
+            }),
+            awsId,
+            resourceType,
+          ]
+        );
+        resourcesSynced = 1;
+      } else {
+        // Insert new record
+        await pool.query(
+          `INSERT INTO infrastructure_resources
+           (service_id, resource_type, aws_id, aws_region, status, cost_per_month, metadata)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            null,
+            resourceType,
+            awsId,
+            process.env.AWS_REGION || 'us-east-1',
+            'Active',
+            awsCosts.total,
+            JSON.stringify({
+              last_synced_at: now.toISOString(),
+              period: awsCosts.period,
+              by_service: awsCosts.byService,
+            }),
+          ]
+        );
+        resourcesSynced = 1;
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          resourcesSynced,
+          totalCost: awsCosts.total,
+          lastSyncedAt: now.toISOString(),
+          period: awsCosts.period,
+          byService: awsCosts.byService,
+        },
+        message: 'Successfully synced AWS resources',
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Error syncing AWS resources:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to sync AWS resources',
       };
       res.status(500).json(response);
     }

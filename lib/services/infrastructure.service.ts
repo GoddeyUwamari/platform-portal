@@ -64,4 +64,10 @@ export const infrastructureService = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/infrastructure/${id}`);
   },
+
+  // Sync AWS resources
+  syncAWS: async (): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>('/api/infrastructure/sync-aws');
+    return handleApiResponse(response);
+  },
 };

@@ -19,7 +19,7 @@ import {
   ListBucketsCommand,
   GetBucketLocationCommand,
 } from '@aws-sdk/client-s3'
-import pool from '../config/database'
+import { pool } from '../config/database'
 
 interface ResourceCost {
   service: string

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Server, AlertCircle, Database, HardDrive, Cloud, Zap, Globe, Network } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Server, AlertCircle, Database, HardDrive, Cloud, Zap, Globe, Network, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Breadcrumb } from '@/components/navigation/breadcrumb'
@@ -100,18 +101,63 @@ function EmptyState() {
 
 export default function InfrastructurePage() {
   const [resourceFilter, setResourceFilter] = useState<ResourceFilter>('all')
+  const queryClient = useQueryClient()
 
   const { data: resources = [], isLoading, error, refetch } = useQuery({
     queryKey: ['infrastructure', resourceFilter],
     queryFn: async () => {
       const allResources = await infrastructureService.getAll()
+      // Filter out metadata records (AWS_COST_TOTAL) that aren't actual resources
+      const actualResources = allResources.filter(r => (r.resourceType as string) !== 'AWS_COST_TOTAL')
       return resourceFilter === 'all'
-        ? allResources
-        : allResources.filter(r => r.resourceType === resourceFilter)
+        ? actualResources
+        : actualResources.filter(r => r.resourceType === resourceFilter)
     },
   })
 
+  // Get all resources including metadata to find AWS_COST_TOTAL for last sync timestamp
+  const { data: allResourcesWithMeta = [] } = useQuery({
+    queryKey: ['infrastructure-all'],
+    queryFn: () => infrastructureService.getAll(),
+  })
+
   const totalMonthlyCost = resources.reduce((sum, r) => sum + r.costPerMonth, 0)
+
+  // Sync AWS mutation
+  const syncMutation = useMutation({
+    mutationFn: infrastructureService.syncAWS,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['infrastructure'] })
+      queryClient.invalidateQueries({ queryKey: ['infrastructure-all'] })
+      toast.success(`AWS resources synced successfully. Total cost: $${data.totalCost.toFixed(2)}`)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to sync AWS resources')
+    },
+  })
+
+  const handleSyncAWS = () => {
+    syncMutation.mutate()
+  }
+
+  // Calculate last synced timestamp
+  const getLastSyncedText = () => {
+    const awsCostRecord = allResourcesWithMeta.find(r => (r.resourceType as string) === 'AWS_COST_TOTAL')
+    if (!awsCostRecord?.updatedAt) return 'Never synced'
+
+    const lastSynced = new Date(awsCostRecord.updatedAt)
+    const now = new Date()
+    const diffMinutes = Math.floor((now.getTime() - lastSynced.getTime()) / (1000 * 60))
+
+    if (diffMinutes < 1) return 'Just now'
+    if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`
+
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
+
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
+  }
 
   const getStatusBadge = (status: ResourceStatus) => {
     const variants = {
@@ -159,6 +205,19 @@ export default function InfrastructurePage() {
           <h1 className="text-3xl font-bold tracking-tight">Infrastructure Resources</h1>
           <p className="text-muted-foreground mt-2">
             Monitor AWS resources and track monthly costs
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            onClick={handleSyncAWS}
+            disabled={syncMutation.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+            {syncMutation.isPending ? 'Syncing...' : 'Sync AWS'}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Last synced: {getLastSyncedText()}
           </p>
         </div>
       </div>
@@ -229,7 +288,7 @@ export default function InfrastructurePage() {
               {resources.map((resource) => (
                 <TableRow key={resource.id} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">
-                    {resource.serviceName || resource.serviceId.substring(0, 8)}
+                    {resource.serviceName || resource.serviceId?.substring(0, 8) || 'N/A'}
                   </TableCell>
                   <TableCell>{getResourceTypeBadge(resource.resourceType)}</TableCell>
                   <TableCell className="font-mono text-sm">{resource.awsId}</TableCell>
