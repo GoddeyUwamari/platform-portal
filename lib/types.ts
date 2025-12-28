@@ -634,3 +634,59 @@ export interface DORAMetricsFilters {
   teamId?: string;
   environment?: string;
 }
+
+// Alert History Types
+export type AlertSeverity = 'critical' | 'warning';
+export type AlertStatus = 'firing' | 'acknowledged' | 'resolved';
+
+export interface Alert {
+  id: string;
+  alertName: string;
+  serviceId?: string;
+  serviceName?: string;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  description: string;
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+  startedAt: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  resolvedAt?: string;
+  durationMinutes?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AlertStats {
+  total: number;
+  active: number;
+  acknowledged: number;
+  resolved: number;
+  criticalCount: number;
+  warningCount: number;
+  avgResolutionTime: number;
+}
+
+export interface AlertFilters {
+  dateRange?: DateRangeOption;
+  serviceId?: string;
+  severity?: AlertSeverity;
+  status?: AlertStatus;
+}
+
+export interface AlertHistoryResponse {
+  success: boolean;
+  data: Alert[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface AlertStatsResponse {
+  success: boolean;
+  data: AlertStats;
+}

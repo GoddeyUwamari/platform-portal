@@ -7,6 +7,7 @@ import platformRoutes from './platform.routes';
 import awsRoutes from './aws.routes';
 import costRecommendationsRoutes from './cost-recommendations.routes';
 import doraMetricsRoutes from './dora-metrics.routes';
+import alertHistoryRoutes from './alert-history.routes';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.use('/platform', platformRoutes);
 router.use('/aws', awsRoutes);
 router.use('/cost-recommendations', costRecommendationsRoutes);
 router.use('/metrics/dora', doraMetricsRoutes);
+router.use('/alerts', alertHistoryRoutes);
 
 // API root
 router.get('/', (req, res) => {
@@ -35,6 +37,7 @@ router.get('/', (req, res) => {
       aws: '/api/aws',
       costRecommendations: '/api/cost-recommendations',
       doraMetrics: '/api/metrics/dora',
+      alerts: '/api/alerts',
     },
   });
 });

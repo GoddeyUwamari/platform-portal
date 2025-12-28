@@ -87,6 +87,26 @@ export const doraMTTRMinutes = new Gauge({
   registers: [register],
 })
 
+// Alert Metrics
+export const alertsActiveTotal = new Gauge({
+  name: 'alerts_active_total',
+  help: 'Number of active (firing) alerts',
+  labelNames: ['severity'],
+  registers: [register],
+})
+
+export const alertsAcknowledgedTotal = new Gauge({
+  name: 'alerts_acknowledged_total',
+  help: 'Number of acknowledged alerts',
+  registers: [register],
+})
+
+export const alertsMTTRMinutes = new Gauge({
+  name: 'alerts_mttr_minutes',
+  help: 'Mean time to resolve alerts (minutes)',
+  registers: [register],
+})
+
 // Update business metrics from database and AWS
 export async function updateBusinessMetrics(dbPool: any) {
   try {
@@ -220,6 +240,25 @@ export async function updateBusinessMetrics(dbPool: any) {
 
     if (mttr.rows.length > 0 && mttr.rows[0].avg_minutes) {
       doraMTTRMinutes.set(Number(mttr.rows[0].avg_minutes))
+    }
+
+    // Alert Metrics
+    const alerts = await dbPool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'firing' AND severity = 'critical') as critical_active,
+        COUNT(*) FILTER (WHERE status = 'firing' AND severity = 'warning') as warning_active,
+        COUNT(*) FILTER (WHERE status = 'acknowledged') as acknowledged,
+        COALESCE(AVG(duration_minutes) FILTER (WHERE status = 'resolved'), 0) as avg_mttr
+      FROM alert_history
+      WHERE started_at >= $1
+    `, [thirtyDaysAgo])
+
+    if (alerts.rows.length > 0) {
+      const row = alerts.rows[0]
+      alertsActiveTotal.set({ severity: 'critical' }, Number(row.critical_active))
+      alertsActiveTotal.set({ severity: 'warning' }, Number(row.warning_active))
+      alertsAcknowledgedTotal.set(Number(row.acknowledged))
+      alertsMTTRMinutes.set(Number(row.avg_mttr))
     }
   } catch (error) {
     console.error('Error updating metrics:', error)

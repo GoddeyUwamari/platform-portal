@@ -10,6 +10,7 @@ import { pool, testConnection } from './config/database';
 import { metricsMiddleware } from './middleware/metrics';
 import metricsRoutes from './routes/metrics.routes';
 import { updateBusinessMetrics } from './metrics';
+import { AlertSyncJob } from './jobs/alert-sync.job';
 
 dotenv.config();
 
@@ -103,6 +104,10 @@ const startServer = async () => {
 
     // Initial metrics update
     await updateBusinessMetrics(pool);
+
+    // Start alert sync job (syncs alerts from Prometheus every minute)
+    const alertSyncJob = new AlertSyncJob(pool);
+    alertSyncJob.start();
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
