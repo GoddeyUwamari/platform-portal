@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import authRoutes from './auth.routes';
+import organizationsRoutes from './organizations.routes';
 import servicesRoutes from './services.routes';
 import deploymentsRoutes from './deployments.routes';
 import infrastructureRoutes from './infrastructure.routes';
@@ -11,7 +13,13 @@ import alertHistoryRoutes from './alert-history.routes';
 
 const router = Router();
 
-// API routes
+// Authentication routes (public)
+router.use('/auth', authRoutes);
+
+// Organization routes (protected)
+router.use('/organizations', organizationsRoutes);
+
+// API routes (will need authentication middleware)
 router.use('/services', servicesRoutes);
 router.use('/deployments', deploymentsRoutes);
 router.use('/infrastructure', infrastructureRoutes);
@@ -26,9 +34,11 @@ router.use('/alerts', alertHistoryRoutes);
 router.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Platform Portal API',
-    version: '1.0.0',
+    message: 'DevControl API - Multi-Tenant Platform Engineering Portal',
+    version: '2.0.0',
     endpoints: {
+      auth: '/api/auth',
+      organizations: '/api/organizations',
       services: '/api/services',
       deployments: '/api/deployments',
       infrastructure: '/api/infrastructure',

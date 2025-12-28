@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/contexts/auth-context'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -25,28 +26,34 @@ const navigation = [
   { name: 'Alerts', href: '/admin/alerts', icon: AlertTriangle },
 ]
 
-// Mock user data - authentication disabled
-const mockUser = {
-  firstName: 'Demo',
-  lastName: 'User',
-  email: 'demo@devcontrol.dev',
-}
-
 export function TopNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const { user, isLoading } = useAuth()
+
+  // Debug log
+  console.log('👤 TopNav - Current user:', user)
 
   const getUserInitials = () => {
-    const firstInitial = mockUser.firstName?.charAt(0) || mockUser.email.charAt(0)
-    const lastInitial = mockUser.lastName?.charAt(0) || ''
-    return (firstInitial + lastInitial).toUpperCase()
+    if (!user) return 'U'
+
+    const fullName = user.fullName || ''
+    const nameParts = fullName.split(' ')
+
+    if (nameParts.length >= 2) {
+      return (nameParts[0].charAt(0) + nameParts[1].charAt(0)).toUpperCase()
+    }
+
+    if (fullName) {
+      return fullName.charAt(0).toUpperCase()
+    }
+
+    return user.email?.charAt(0).toUpperCase() || 'U'
   }
 
   const getUserName = () => {
-    if (mockUser.firstName && mockUser.lastName) {
-      return `${mockUser.firstName} ${mockUser.lastName}`
-    }
-    return mockUser.email
+    if (!user) return 'Loading...'
+    return user.fullName || user.email
   }
 
   const handleSearchClick = () => {
@@ -166,7 +173,7 @@ export function TopNav() {
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium">{getUserName()}</p>
-                <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+                <p className="text-xs text-muted-foreground">{user?.email || 'Loading...'}</p>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -32,6 +32,7 @@ import {
 import { alertHistoryService } from '@/lib/services/alert-history.service';
 import { Alert, AlertFilters, DateRangeOption } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 
 export default function AlertsPage() {
   const queryClient = useQueryClient();
@@ -167,6 +168,13 @@ export default function AlertsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Alerts' }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Alert History</h1>

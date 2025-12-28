@@ -68,7 +68,9 @@ api.interceptors.response.use(
   }
 );
 
+// Export as both default and named export for flexibility
 export default api;
+export { api };
 
 // Type-safe API response helper
 export const handleApiResponse = <T>(response: { data: ApiResponse<T> }): T => {

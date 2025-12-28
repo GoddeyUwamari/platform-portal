@@ -1,18 +1,19 @@
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'BILLING_ADMIN' | 'USER' | 'VIEWER';
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING';
 
+// User type matching backend API response
 export interface User {
   id: string;
   email: string;
-  tenantId: string;
-  role: UserRole;
-  firstName: string;
-  lastName: string;
-  status: UserStatus;
-  emailVerified: boolean;
+  fullName: string;
+  avatarUrl?: string | null;
+  isEmailVerified: boolean;
+  tenantId?: string; // Optional for multi-tenant features
+  role?: UserRole; // Optional for RBAC features
+  status?: UserStatus; // Optional for user management
   lastLoginAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {

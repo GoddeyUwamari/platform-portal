@@ -203,9 +203,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Full Name</p>
                   <p className="font-medium">
-                    {user.firstName || user.lastName
-                      ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                      : 'Not set'}
+                    {user.fullName || 'Not set'}
                   </p>
                 </div>
               </div>

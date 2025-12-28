@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Breadcrumb } from '@/components/navigation/breadcrumb';
 import {
   Table,
   TableBody,
@@ -204,6 +205,13 @@ export default function DORAMetricsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'DORA Metrics' }
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">DORA Metrics Dashboard</h1>
