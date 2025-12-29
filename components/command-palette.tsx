@@ -12,6 +12,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
+import { DialogTitle } from '@/components/ui/dialog'
 import { Layers, Rocket, Server, Users, Activity, Plus, LayoutDashboard } from 'lucide-react'
 import { servicesService } from '@/lib/services/services.service'
 import { deploymentsService } from '@/lib/services/deployments.service'
@@ -60,6 +61,7 @@ export function CommandPalette() {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
+      <DialogTitle className="sr-only">Command Palette</DialogTitle>
       <CommandInput placeholder="Search services, deployments, infrastructure..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
@@ -163,7 +165,7 @@ export function CommandPalette() {
                 >
                   <Rocket className="mr-2 h-4 w-4" />
                   <div className="flex flex-col">
-                    <span>{deployment.serviceName || deployment.serviceId.substring(0, 8)}</span>
+                    <span>{deployment.serviceName || deployment.serviceId?.substring(0, 8) || 'Unknown'}</span>
                     <span className="text-xs text-muted-foreground">
                       {deployment.environment} · {deployment.status}
                     </span>
@@ -186,7 +188,7 @@ export function CommandPalette() {
                 >
                   <Server className="mr-2 h-4 w-4" />
                   <div className="flex flex-col">
-                    <span>{resource.serviceName || resource.serviceId.substring(0, 8)}</span>
+                    <span>{resource.serviceName || resource.serviceId?.substring(0, 8) || 'Unknown'}</span>
                     <span className="text-xs text-muted-foreground">
                       {resource.resourceType} · {resource.awsRegion}
                     </span>

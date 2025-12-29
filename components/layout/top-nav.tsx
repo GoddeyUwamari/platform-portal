@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Layers, Rocket, Server, Users, Activity, TrendingUp, Plus, Search, AlertTriangle } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,7 +163,6 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/avatar.png" alt={getUserName()} />
                   <AvatarFallback className="text-xs">
                     {getUserInitials()}
                   </AvatarFallback>
