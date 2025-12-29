@@ -94,9 +94,9 @@ export default function AWSResourcesPage() {
   const total = resourcesData?.data?.total || 0;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">AWS Resource Inventory</h1>
           <p className="text-muted-foreground mt-1">
@@ -106,6 +106,7 @@ export default function AWSResourcesPage() {
         <Button
           onClick={handleDiscovery}
           disabled={discoveryMutation.isPending}
+          className="shrink-0"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${discoveryMutation.isPending ? 'animate-spin' : ''}`} />
           {discoveryMutation.isPending ? 'Discovering...' : 'Discover Resources'}
@@ -113,7 +114,7 @@ export default function AWSResourcesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Resources</CardTitle>
@@ -213,7 +214,7 @@ export default function AWSResourcesPage() {
           <CardDescription>Filter resources by type, region, or status</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Search</label>
               <div className="relative">
@@ -309,17 +310,17 @@ export default function AWSResourcesPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Resource</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Cost/Month</TableHead>
-                    <TableHead>Security</TableHead>
-                    <TableHead>Compliance</TableHead>
+                    <TableHead className="whitespace-nowrap">Resource</TableHead>
+                    <TableHead className="whitespace-nowrap">Type</TableHead>
+                    <TableHead className="whitespace-nowrap">Region</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="whitespace-nowrap">Cost/Month</TableHead>
+                    <TableHead className="whitespace-nowrap">Security</TableHead>
+                    <TableHead className="whitespace-nowrap">Compliance</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Layers, Network, Rocket, Server, Users, Activity, TrendingUp, Plus, Search, AlertTriangle, Database } from 'lucide-react'
+import { Layers, Network, Rocket, Server, Users, Activity, TrendingUp, Plus, Search, AlertTriangle, Database, Settings, Building2, User, Book, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/contexts/auth-context'
 
 const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Services', href: '/services', icon: Layers },
   { name: 'Dependencies', href: '/dependencies', icon: Network },
   { name: 'Deployments', href: '/deployments', icon: Rocket },
@@ -25,7 +24,6 @@ const navigation = [
   { name: 'Teams', href: '/teams', icon: Users },
   { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
   { name: 'DORA Metrics', href: '/admin/dora-metrics', icon: TrendingUp },
-  { name: 'Alerts', href: '/admin/alerts', icon: AlertTriangle },
 ]
 
 export function TopNav() {
@@ -69,33 +67,36 @@ export function TopNav() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center pl-6 pr-8">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <div className="max-w-[1920px] mx-auto flex h-16 items-center px-4 md:px-6 lg:px-8">
         {/* Left: Logo + Navigation */}
-        <div className="flex items-center gap-8 flex-1">
+        <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
+            <div className="w-8 h-8 rounded-md bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
               <span className="text-white text-sm font-bold">DC</span>
             </div>
-            <span className="hidden md:inline-block">DevControl</span>
+            <span className="hidden lg:inline-block">DevControl</span>
           </Link>
 
           {/* Navigation Links - Hidden on mobile */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navigation.map((item) => {
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1">
+            {navigation.map((item, index) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              // Hide some items on medium screens, show on xl
+              const isHiddenOnMedium = index >= 6 // Hide last 2 items (Monitoring, DORA Metrics) on medium
 
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                    'px-2 lg:px-3 py-2 text-xs lg:text-sm font-medium rounded-md transition-colors whitespace-nowrap',
                     'hover:bg-accent hover:text-accent-foreground',
                     isActive
                       ? 'text-foreground'
-                      : 'text-muted-foreground'
+                      : 'text-muted-foreground',
+                    isHiddenOnMedium && 'hidden xl:flex'
                   )}
                 >
                   {item.name}
@@ -106,13 +107,13 @@ export function TopNav() {
         </div>
 
         {/* Right: Search + Actions + User */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 lg:gap-3 shrink-0 ml-2 lg:ml-4">
           {/* Search Trigger (Cmd+K) */}
           <Button
             variant="outline"
             size="sm"
             onClick={handleSearchClick}
-            className="hidden md:flex items-center gap-2 text-sm text-muted-foreground md:w-48 lg:w-64 justify-start"
+            className="hidden md:flex items-center gap-2 text-sm text-muted-foreground md:w-32 lg:w-48 justify-start"
           >
             <Search className="h-4 w-4" />
             <span>Search...</span>
@@ -134,9 +135,9 @@ export function TopNav() {
           {/* Quick Actions Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="gap-1.5">
+              <Button size="sm" className="gap-1.5 shrink-0">
                 <Plus className="h-4 w-4" />
-                <span className="hidden md:inline">New</span>
+                <span className="hidden lg:inline">New</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -163,7 +164,7 @@ export function TopNav() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full shrink-0">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="text-xs">
                     {getUserInitials()}
@@ -176,6 +177,43 @@ export function TopNav() {
                 <p className="text-sm font-medium">{getUserName()}</p>
                 <p className="text-xs text-muted-foreground">{user?.email || 'Loading...'}</p>
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/settings/profile" className="flex items-center gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings/organization" className="flex items-center gap-2 cursor-pointer">
+                  <Building2 className="h-4 w-4" />
+                  Organization
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings/preferences" className="flex items-center gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/alerts" className="flex items-center gap-2 cursor-pointer">
+                  <AlertTriangle className="h-4 w-4" />
+                  Alerts
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/docs" className="flex items-center gap-2 cursor-pointer">
+                  <Book className="h-4 w-4" />
+                  Documentation
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
