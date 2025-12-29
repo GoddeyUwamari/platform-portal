@@ -11,6 +11,7 @@ import { metricsMiddleware } from './middleware/metrics';
 import metricsRoutes from './routes/metrics.routes';
 import { updateBusinessMetrics } from './metrics';
 import { AlertSyncJob } from './jobs/alert-sync.job';
+import { ResourceDiscoveryJob } from './jobs/resourceDiscovery.job';
 
 dotenv.config();
 
@@ -108,6 +109,10 @@ const startServer = async () => {
     // Start alert sync job (syncs alerts from Prometheus every minute)
     const alertSyncJob = new AlertSyncJob(pool);
     alertSyncJob.start();
+
+    // Start resource discovery job (discovers AWS resources every 6 hours)
+    const resourceDiscoveryJob = new ResourceDiscoveryJob(pool);
+    resourceDiscoveryJob.start();
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

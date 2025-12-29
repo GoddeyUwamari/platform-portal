@@ -11,6 +11,7 @@ import awsRoutes from './aws.routes';
 import costRecommendationsRoutes from './cost-recommendations.routes';
 import doraMetricsRoutes from './dora-metrics.routes';
 import alertHistoryRoutes from './alert-history.routes';
+import awsResourcesRoutes from './awsResources.routes';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use('/infrastructure', infrastructureRoutes);
 router.use('/teams', teamsRoutes);
 router.use('/platform', platformRoutes);
 router.use('/aws', awsRoutes);
+router.use('/aws-resources', awsResourcesRoutes);
 router.use('/cost-recommendations', costRecommendationsRoutes);
 router.use('/metrics/dora', doraMetricsRoutes);
 router.use('/alerts', alertHistoryRoutes);
@@ -48,6 +50,7 @@ router.get('/', (req, res) => {
       teams: '/api/teams',
       platform: '/api/platform',
       aws: '/api/aws',
+      awsResources: '/api/aws-resources',
       costRecommendations: '/api/cost-recommendations',
       doraMetrics: '/api/metrics/dora',
       alerts: '/api/alerts',
