@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
@@ -12,6 +13,7 @@ import metricsRoutes from './routes/metrics.routes';
 import { updateBusinessMetrics } from './metrics';
 import { AlertSyncJob } from './jobs/alert-sync.job';
 import { ResourceDiscoveryJob } from './jobs/resourceDiscovery.job';
+import { WebSocketServer } from './websocket/server';
 
 dotenv.config();
 
@@ -76,7 +78,16 @@ const startServer = async () => {
     // Test database connection
     await testConnection();
 
-    app.listen(PORT, () => {
+    // Create HTTP server (required for WebSocket)
+    const httpServer = createServer(app);
+
+    // Initialize WebSocket server
+    const wsServer = new WebSocketServer(httpServer);
+
+    // Make wsServer available to all routes
+    app.set('wsServer', wsServer);
+
+    httpServer.listen(PORT, () => {
       console.log('='.repeat(50));
       console.log(`🚀 Platform Portal API Server`);
       console.log('='.repeat(50));
@@ -85,6 +96,7 @@ const startServer = async () => {
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log(`API root: http://localhost:${PORT}/api`);
       console.log(`Metrics: http://localhost:${PORT}/metrics`);
+      console.log(`🔌 WebSocket server ready at ws://localhost:${PORT}`);
       console.log('='.repeat(50));
       console.log('Available endpoints:');
       console.log(`  - GET    /api/services`);

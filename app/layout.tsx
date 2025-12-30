@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Platform Portal",
+  title: "DevControl",
   description: "Internal Developer Portal for Platform Engineering Toolkit",
 };
 
