@@ -18,11 +18,31 @@ import {
   GetBucketEncryptionCommand,
   GetBucketAclCommand,
 } from '@aws-sdk/client-s3';
+import {
+  LambdaClient,
+  ListFunctionsCommand,
+  ListTagsCommand,
+} from '@aws-sdk/client-lambda';
+import {
+  ECSClient,
+  ListClustersCommand,
+  ListServicesCommand,
+  DescribeServicesCommand,
+} from '@aws-sdk/client-ecs';
+import {
+  ElasticLoadBalancingV2Client,
+  DescribeLoadBalancersCommand,
+  DescribeTagsCommand as DescribeELBTagsCommand,
+} from '@aws-sdk/client-elastic-load-balancing-v2';
+import {
+  DescribeVpcsCommand,
+} from '@aws-sdk/client-ec2';
 import { AWSClientFactory } from './aws-client-factory.service';
 import {
   AWSResource,
   CreateAWSResourceInput,
   ResourceType,
+  ResourceStatus,
   DiscoveryResult,
   DiscoveryJobStatus,
   EC2InstanceMetadata,
@@ -38,6 +58,8 @@ export class AWSResourceDiscoveryService {
    * Creates a discovery job and scans EC2, RDS, and S3 resources
    */
   async discoverAllResources(organizationId: string): Promise<DiscoveryResult> {
+    console.log(`\n🔍 [Discovery] Starting AWS resource discovery for organization: ${organizationId}`);
+
     const client = await this.pool.connect();
     let jobId: string;
 
@@ -50,11 +72,12 @@ export class AWSResourceDiscoveryService {
         [
           organizationId,
           'running' as DiscoveryJobStatus,
-          ['ec2', 'rds', 's3'],
+          ['ec2', 'rds', 's3', 'lambda', 'ecs', 'load-balancer', 'vpc'],
           [] // Will be populated during discovery
         ]
       );
       jobId = jobResult.rows[0].id;
+      console.log(`📋 [Discovery] Created discovery job: ${jobId}`);
 
       // Get AWS clients
       const awsClients = await AWSClientFactory.createClients(organizationId);
@@ -63,11 +86,15 @@ export class AWSResourceDiscoveryService {
         throw new Error('AWS credentials not configured for this organization');
       }
 
+      console.log(`✅ [Discovery] AWS clients created successfully`);
+      console.log(`🌍 [Discovery] Target region: ${awsClients.region}`);
+
       const errors: string[] = [];
       let totalDiscovered = 0;
       let totalUpdated = 0;
 
       // Discover EC2 instances
+      console.log(`🔎 [Discovery] Discovering EC2 instances...`);
       try {
         const ec2Resources = await this.discoverEC2Instances(organizationId, awsClients.ec2!, awsClients.region);
         for (const resource of ec2Resources) {
@@ -75,13 +102,14 @@ export class AWSResourceDiscoveryService {
           if (result === 'created') totalDiscovered++;
           else if (result === 'updated') totalUpdated++;
         }
-        console.log(`[Discovery] Found ${ec2Resources.length} EC2 instances`);
+        console.log(`✅ [Discovery] Found ${ec2Resources.length} EC2 instances`);
       } catch (error: any) {
-        console.error('[Discovery] EC2 discovery failed:', error.message);
+        console.error(`❌ [Discovery] EC2 discovery failed:`, error.message);
         errors.push(`EC2: ${error.message}`);
       }
 
       // Discover RDS databases
+      console.log(`🔎 [Discovery] Discovering RDS databases...`);
       try {
         const rdsResources = await this.discoverRDSDatabases(organizationId, awsClients.rds!, awsClients.region);
         for (const resource of rdsResources) {
@@ -89,13 +117,14 @@ export class AWSResourceDiscoveryService {
           if (result === 'created') totalDiscovered++;
           else if (result === 'updated') totalUpdated++;
         }
-        console.log(`[Discovery] Found ${rdsResources.length} RDS databases`);
+        console.log(`✅ [Discovery] Found ${rdsResources.length} RDS databases`);
       } catch (error: any) {
-        console.error('[Discovery] RDS discovery failed:', error.message);
+        console.error(`❌ [Discovery] RDS discovery failed:`, error.message);
         errors.push(`RDS: ${error.message}`);
       }
 
       // Discover S3 buckets
+      console.log(`🔎 [Discovery] Discovering S3 buckets...`);
       try {
         const s3Resources = await this.discoverS3Buckets(organizationId, awsClients.s3!, awsClients.region);
         for (const resource of s3Resources) {
@@ -103,13 +132,85 @@ export class AWSResourceDiscoveryService {
           if (result === 'created') totalDiscovered++;
           else if (result === 'updated') totalUpdated++;
         }
-        console.log(`[Discovery] Found ${s3Resources.length} S3 buckets`);
+        console.log(`✅ [Discovery] Found ${s3Resources.length} S3 buckets`);
       } catch (error: any) {
-        console.error('[Discovery] S3 discovery failed:', error.message);
+        console.error(`❌ [Discovery] S3 discovery failed:`, error.message);
         errors.push(`S3: ${error.message}`);
       }
 
+      // Discover Lambda functions
+      console.log(`🔎 [Discovery] Discovering Lambda functions...`);
+      try {
+        const lambdaResources = await this.discoverLambdaFunctions(organizationId, awsClients.region);
+        for (const resource of lambdaResources) {
+          const result = await this.upsertResource(client, resource);
+          if (result === 'created') totalDiscovered++;
+          else if (result === 'updated') totalUpdated++;
+        }
+        console.log(`✅ [Discovery] Found ${lambdaResources.length} Lambda functions`);
+      } catch (error: any) {
+        console.error(`❌ [Discovery] Lambda discovery failed:`, error.message);
+        errors.push(`Lambda: ${error.message}`);
+      }
+
+      // Discover ECS services
+      console.log(`🔎 [Discovery] Discovering ECS services...`);
+      try {
+        const ecsResources = await this.discoverECSServices(organizationId, awsClients.region);
+        for (const resource of ecsResources) {
+          const result = await this.upsertResource(client, resource);
+          if (result === 'created') totalDiscovered++;
+          else if (result === 'updated') totalUpdated++;
+        }
+        console.log(`✅ [Discovery] Found ${ecsResources.length} ECS services`);
+      } catch (error: any) {
+        console.error(`❌ [Discovery] ECS discovery failed:`, error.message);
+        errors.push(`ECS: ${error.message}`);
+      }
+
+      // Discover Load Balancers
+      console.log(`🔎 [Discovery] Discovering Load Balancers...`);
+      try {
+        const lbResources = await this.discoverLoadBalancers(organizationId, awsClients.region);
+        for (const resource of lbResources) {
+          const result = await this.upsertResource(client, resource);
+          if (result === 'created') totalDiscovered++;
+          else if (result === 'updated') totalUpdated++;
+        }
+        console.log(`✅ [Discovery] Found ${lbResources.length} Load Balancers`);
+      } catch (error: any) {
+        console.error(`❌ [Discovery] Load Balancer discovery failed:`, error.message);
+        errors.push(`Load Balancer: ${error.message}`);
+      }
+
+      // Discover VPC resources
+      console.log(`🔎 [Discovery] Discovering VPCs...`);
+      try {
+        const vpcResources = await this.discoverVPCResources(organizationId, awsClients.ec2!, awsClients.region);
+        for (const resource of vpcResources) {
+          const result = await this.upsertResource(client, resource);
+          if (result === 'created') totalDiscovered++;
+          else if (result === 'updated') totalUpdated++;
+        }
+        console.log(`✅ [Discovery] Found ${vpcResources.length} VPCs`);
+      } catch (error: any) {
+        console.error(`❌ [Discovery] VPC discovery failed:`, error.message);
+        errors.push(`VPC: ${error.message}`);
+      }
+
       // Update job status
+      console.log(`\n📊 [Discovery] Discovery Summary:`);
+      console.log(`  - Total resources discovered (new): ${totalDiscovered}`);
+      console.log(`  - Total resources updated: ${totalUpdated}`);
+      console.log(`  - Total resources: ${totalDiscovered + totalUpdated}`);
+
+      if (errors.length > 0) {
+        console.log(`  - Errors encountered: ${errors.length}`);
+        errors.forEach((err, idx) => {
+          console.log(`    ${idx + 1}. ${err}`);
+        });
+      }
+
       await client.query(
         `UPDATE resource_discovery_jobs
          SET status = $1, completed_at = NOW(), resources_discovered = $2, resources_updated = $3, error_message = $4
@@ -123,6 +224,12 @@ export class AWSResourceDiscoveryService {
         ]
       );
 
+      if (errors.length > 0) {
+        console.log(`⚠️  [Discovery] Completed with errors`);
+      } else {
+        console.log(`🎉 [Discovery] AWS resource discovery completed successfully!\n`);
+      }
+
       return {
         job_id: jobId,
         resources_discovered: totalDiscovered,
@@ -131,6 +238,9 @@ export class AWSResourceDiscoveryService {
         errors
       };
     } catch (error: any) {
+      console.error(`\n❌ [Discovery] Fatal error during discovery:`, error.message);
+      console.error(`Stack trace:`, error.stack);
+
       // Update job as failed
       if (jobId!) {
         await client.query(
@@ -314,7 +424,7 @@ export class AWSResourceDiscoveryService {
         region,
         tags: {}, // S3 bucket tags require separate API call
         metadata,
-        status: 'active',
+        status: 'active' as ResourceStatus,
         estimated_monthly_cost: this.estimateS3Cost(),
         is_encrypted: isEncrypted,
         is_public: isPublic,
@@ -390,13 +500,13 @@ export class AWSResourceDiscoveryService {
   /**
    * Map EC2 instance state to our status
    */
-  private mapEC2Status(state: string | undefined): string {
-    const mapping: Record<string, string> = {
+  private mapEC2Status(state: string | undefined): ResourceStatus {
+    const mapping: Record<string, ResourceStatus> = {
       pending: 'pending',
       running: 'running',
-      'shutting-down': 'stopping',
+      'shutting-down': 'stopped',
       terminated: 'terminated',
-      stopping: 'stopping',
+      stopping: 'stopped',
       stopped: 'stopped',
     };
     return mapping[state || ''] || 'unknown';
@@ -405,8 +515,8 @@ export class AWSResourceDiscoveryService {
   /**
    * Map RDS instance status to our status
    */
-  private mapRDSStatus(status: string | undefined): string {
-    return status || 'unknown';
+  private mapRDSStatus(status: string | undefined): ResourceStatus {
+    return (status || 'unknown') as ResourceStatus;
   }
 
   /**
@@ -469,5 +579,285 @@ export class AWSResourceDiscoveryService {
    */
   private estimateS3Cost(): number {
     return 5; // $5/month baseline estimate
+  }
+
+  /**
+   * Discover Lambda functions
+   */
+  private async discoverLambdaFunctions(
+    organizationId: string,
+    region: string
+  ): Promise<CreateAWSResourceInput[]> {
+    const lambdaClient = new LambdaClient({ region });
+    const resources: CreateAWSResourceInput[] = [];
+
+    try {
+      const { Functions } = await lambdaClient.send(new ListFunctionsCommand({}));
+
+      for (const func of Functions || []) {
+        if (!func.FunctionArn || !func.FunctionName) continue;
+
+        let tags: Record<string, string> = {};
+        try {
+          const { Tags } = await lambdaClient.send(
+            new ListTagsCommand({ Resource: func.FunctionArn })
+          );
+          tags = Tags || {};
+        } catch (error) {
+          // Tags might not be accessible
+          tags = {};
+        }
+
+        const name = tags.Name || func.FunctionName;
+
+        resources.push({
+          organization_id: organizationId,
+          resource_arn: func.FunctionArn,
+          resource_id: func.FunctionName,
+          resource_name: name,
+          resource_type: 'lambda',
+          region,
+          tags,
+          metadata: {
+            runtime: func.Runtime,
+            memory: func.MemorySize,
+            timeout: func.Timeout,
+            last_modified: func.LastModified,
+            code_size: func.CodeSize,
+            handler: func.Handler,
+          },
+          status: (func.State || 'Active') as ResourceStatus,
+          is_encrypted: !!func.Environment?.Variables,
+          estimated_monthly_cost: this.estimateLambdaCost(func),
+        });
+      }
+    } catch (error: any) {
+      console.error('[Lambda Discovery] Error:', error.message);
+    }
+
+    return resources;
+  }
+
+  /**
+   * Estimate monthly cost for Lambda function
+   */
+  private estimateLambdaCost(func: any): number {
+    // Lambda pricing: $0.20 per 1M requests + $0.0000166667 per GB-second
+    // Estimate: 100K requests/month, actual memory, 1s avg duration
+    const requests = 100_000;
+    const memoryGB = (func.MemorySize || 128) / 1024;
+    const duration = Math.min(func.Timeout || 3, 3); // Assume 3s avg
+
+    const requestCost = (requests / 1_000_000) * 0.20;
+    const computeCost = (requests * duration * memoryGB) * 0.0000166667;
+
+    return requestCost + computeCost;
+  }
+
+  /**
+   * Discover ECS services
+   */
+  private async discoverECSServices(
+    organizationId: string,
+    region: string
+  ): Promise<CreateAWSResourceInput[]> {
+    const ecsClient = new ECSClient({ region });
+    const resources: CreateAWSResourceInput[] = [];
+
+    try {
+      // List all clusters
+      const { clusterArns } = await ecsClient.send(new ListClustersCommand({}));
+
+      for (const clusterArn of clusterArns || []) {
+        // List services in cluster
+        const { serviceArns } = await ecsClient.send(
+          new ListServicesCommand({ cluster: clusterArn })
+        );
+
+        if (!serviceArns || serviceArns.length === 0) continue;
+
+        // Describe services
+        const { services } = await ecsClient.send(
+          new DescribeServicesCommand({
+            cluster: clusterArn,
+            services: serviceArns,
+          })
+        );
+
+        for (const service of services || []) {
+          if (!service.serviceArn || !service.serviceName) continue;
+
+          const tags = (service.tags || []).reduce((acc, tag) => {
+            if (tag.key && tag.value) {
+              acc[tag.key] = tag.value;
+            }
+            return acc;
+          }, {} as Record<string, string>);
+
+          const name = tags.Name || service.serviceName;
+
+          resources.push({
+            organization_id: organizationId,
+            resource_arn: service.serviceArn,
+            resource_id: service.serviceName,
+            resource_name: name,
+            resource_type: 'ecs',
+            region,
+            tags,
+            metadata: {
+              cluster: service.clusterArn,
+              task_definition: service.taskDefinition,
+              desired_count: service.desiredCount,
+              running_count: service.runningCount,
+              launch_type: service.launchType,
+            },
+            status: (service.status || 'UNKNOWN') as ResourceStatus,
+            estimated_monthly_cost: this.estimateECSCost(service),
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('[ECS Discovery] Error:', error.message);
+    }
+
+    return resources;
+  }
+
+  /**
+   * Estimate monthly cost for ECS service
+   */
+  private estimateECSCost(service: any): number {
+    // Fargate pricing: $0.04048 per vCPU/hour, $0.004445 per GB/hour
+    // Estimate: 0.25 vCPU, 0.5 GB, running 24/7
+    const vCPU = 0.25;
+    const memoryGB = 0.5;
+    const hours = 730; // hours per month
+    const tasks = service.desiredCount || 1;
+
+    const cpuCost = vCPU * 0.04048 * hours * tasks;
+    const memoryCost = memoryGB * 0.004445 * hours * tasks;
+
+    return cpuCost + memoryCost;
+  }
+
+  /**
+   * Discover Application Load Balancers
+   */
+  private async discoverLoadBalancers(
+    organizationId: string,
+    region: string
+  ): Promise<CreateAWSResourceInput[]> {
+    const elbClient = new ElasticLoadBalancingV2Client({ region });
+    const resources: CreateAWSResourceInput[] = [];
+
+    try {
+      const { LoadBalancers } = await elbClient.send(new DescribeLoadBalancersCommand({}));
+
+      for (const lb of LoadBalancers || []) {
+        if (!lb.LoadBalancerArn || !lb.LoadBalancerName) continue;
+
+        let tags: Record<string, string> = {};
+        try {
+          const { TagDescriptions } = await elbClient.send(
+            new DescribeELBTagsCommand({ ResourceArns: [lb.LoadBalancerArn] })
+          );
+
+          tags = (TagDescriptions?.[0]?.Tags || []).reduce((acc, tag) => {
+            if (tag.Key && tag.Value) {
+              acc[tag.Key] = tag.Value;
+            }
+            return acc;
+          }, {} as Record<string, string>);
+        } catch (error) {
+          tags = {};
+        }
+
+        const name = tags.Name || lb.LoadBalancerName;
+
+        resources.push({
+          organization_id: organizationId,
+          resource_arn: lb.LoadBalancerArn,
+          resource_id: lb.LoadBalancerName,
+          resource_name: name,
+          resource_type: 'load-balancer',
+          region,
+          tags,
+          metadata: {
+            type: lb.Type,
+            scheme: lb.Scheme,
+            vpc_id: lb.VpcId,
+            dns_name: lb.DNSName,
+            availability_zones: lb.AvailabilityZones,
+          },
+          status: (lb.State?.Code || 'unknown') as ResourceStatus,
+          is_public: lb.Scheme === 'internet-facing',
+          estimated_monthly_cost: this.estimateLBCost(lb),
+        });
+      }
+    } catch (error: any) {
+      console.error('[Load Balancer Discovery] Error:', error.message);
+    }
+
+    return resources;
+  }
+
+  /**
+   * Estimate monthly cost for Load Balancer
+   */
+  private estimateLBCost(lb: any): number {
+    // ALB pricing: $0.0225 per hour + $0.008 per LCU-hour
+    // Estimate: 1 ALB running 24/7, 10 LCUs
+    const hours = 730;
+    const fixedCost = 0.0225 * hours;
+    const lcuCost = 0.008 * 10 * hours;
+
+    return fixedCost + lcuCost;
+  }
+
+  /**
+   * Discover VPC resources (VPCs, Subnets, Security Groups)
+   */
+  private async discoverVPCResources(
+    organizationId: string,
+    ec2Client: EC2Client,
+    region: string
+  ): Promise<CreateAWSResourceInput[]> {
+    const resources: CreateAWSResourceInput[] = [];
+
+    try {
+      // Discover VPCs
+      const { Vpcs } = await ec2Client.send(new DescribeVpcsCommand({}));
+
+      for (const vpc of Vpcs || []) {
+        if (!vpc.VpcId) continue;
+
+        const tags = this.extractTags(vpc.Tags);
+        const name = tags.Name || vpc.VpcId;
+
+        // Get account ID from VPC owner ID
+        const accountId = vpc.OwnerId || '*';
+
+        resources.push({
+          organization_id: organizationId,
+          resource_arn: `arn:aws:ec2:${region}:${accountId}:vpc/${vpc.VpcId}`,
+          resource_id: vpc.VpcId,
+          resource_name: name,
+          resource_type: 'vpc',
+          region,
+          tags,
+          metadata: {
+            cidr_block: vpc.CidrBlock,
+            is_default: vpc.IsDefault,
+            state: vpc.State,
+          },
+          status: (vpc.State || 'available') as ResourceStatus,
+          estimated_monthly_cost: 0, // VPCs are free
+        });
+      }
+    } catch (error: any) {
+      console.error('[VPC Discovery] Error:', error.message);
+    }
+
+    return resources;
   }
 }

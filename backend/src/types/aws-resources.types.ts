@@ -7,7 +7,7 @@
 // AWS RESOURCE TYPES
 // =====================================================
 
-export type ResourceType = 'ec2' | 'rds' | 's3' | 'lambda' | 'ecs' | 'elb';
+export type ResourceType = 'ec2' | 'rds' | 's3' | 'lambda' | 'ecs' | 'elb' | 'load-balancer' | 'vpc';
 
 export type ResourceStatus =
   | 'running'
@@ -16,7 +16,12 @@ export type ResourceStatus =
   | 'unavailable'
   | 'active'
   | 'inactive'
-  | 'terminated';
+  | 'terminated'
+  | 'Active'
+  | 'pending'
+  | 'failed'
+  | 'unknown'
+  | 'UNKNOWN';
 
 export interface AWSResource {
   id: string;

@@ -27,41 +27,63 @@ export class AWSClientFactory {
    * @returns AWS SDK clients configured with organization credentials
    */
   static async createClients(organizationId: string): Promise<AWSClients> {
+    let credentials: any = null;
+    let credentialSource = 'unknown';
+
     try {
-      // Get organization's AWS credentials
-      const credentials = await organizationService.getAWSCredentials(organizationId);
+      // Try to get organization-specific credentials
+      credentials = await organizationService.getAWSCredentials(organizationId);
 
       if (!credentials || !credentials.accessKeyId || !credentials.secretAccessKey) {
-        console.log(
-          `No AWS credentials configured for organization ${organizationId}, using mock clients`
-        );
+        console.log(`⚠️  No AWS credentials configured for organization ${organizationId}`);
+        credentials = null;
+      } else {
+        credentialSource = 'organization';
+        console.log(`✅ Using organization-specific AWS credentials for ${organizationId}`);
+      }
+    } catch (error: any) {
+      console.log(`⚠️  Organization credentials failed for ${organizationId}:`, error.message);
+      credentials = null;
+    }
+
+    // Fallback to .env credentials if organization credentials not available
+    if (!credentials) {
+      console.log(`🔄 Falling back to .env AWS credentials`);
+
+      if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+        credentials = {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          region: process.env.AWS_REGION || 'us-east-1',
+        };
+        credentialSource = 'env';
+        console.log(`✅ Using .env AWS credentials (region: ${credentials.region})`);
+      } else {
+        console.error(`❌ No AWS credentials available (neither organization nor .env)`);
+        console.log(`Using mock clients`);
         return this.createMockClients();
       }
-
-      const config = {
-        region: credentials.region || 'us-east-1',
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-        },
-      };
-
-      return {
-        costExplorer: new CostExplorerClient(config),
-        ec2: new EC2Client(config),
-        rds: new RDSClient(config),
-        s3: new S3Client(config),
-        cloudWatch: new CloudWatchClient(config),
-        region: config.region,
-        enabled: true,
-      };
-    } catch (error) {
-      console.error(
-        `Error creating AWS clients for organization ${organizationId}:`,
-        error
-      );
-      return this.createMockClients();
     }
+
+    const config = {
+      region: credentials.region || 'us-east-1',
+      credentials: {
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+      },
+    };
+
+    console.log(`🔧 Creating AWS clients with ${credentialSource} credentials for region: ${config.region}`);
+
+    return {
+      costExplorer: new CostExplorerClient(config),
+      ec2: new EC2Client(config),
+      rds: new RDSClient(config),
+      s3: new S3Client(config),
+      cloudWatch: new CloudWatchClient(config),
+      region: config.region,
+      enabled: true,
+    };
   }
 
   /**

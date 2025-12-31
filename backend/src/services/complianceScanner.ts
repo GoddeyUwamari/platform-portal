@@ -4,6 +4,21 @@ import {
   ComplianceSeverity,
   ComplianceCategory,
 } from '../types/aws-resources.types';
+import {
+  S3Client,
+  GetBucketAclCommand,
+  GetBucketPolicyCommand,
+} from '@aws-sdk/client-s3';
+import {
+  EC2Client,
+  DescribeSecurityGroupsCommand,
+} from '@aws-sdk/client-ec2';
+import {
+  IAMClient,
+  ListUsersCommand,
+  ListMFADevicesCommand,
+  ListAccessKeysCommand,
+} from '@aws-sdk/client-iam';
 
 /**
  * Compliance Scanner Service
@@ -235,5 +250,210 @@ export class ComplianceScannerService {
       networking: 'Networking',
     };
     return names[category];
+  }
+
+  /**
+   * Enhanced S3 public access check
+   * Checks both ACL and bucket policy for public access
+   */
+  async checkS3PublicAccessEnhanced(resource: AWSResource, region: string): Promise<ComplianceIssue[]> {
+    if (resource.resource_type !== 's3') return [];
+
+    const issues: ComplianceIssue[] = [];
+
+    try {
+      const s3Client = new S3Client({ region });
+
+      // Check bucket ACL
+      try {
+        const { Grants } = await s3Client.send(
+          new GetBucketAclCommand({ Bucket: resource.resource_id })
+        );
+
+        const hasPublicRead = Grants?.some(grant =>
+          grant.Grantee?.URI === 'http://acs.amazonaws.com/groups/global/AllUsers' &&
+          (grant.Permission === 'READ' || grant.Permission === 'FULL_CONTROL')
+        );
+
+        if (hasPublicRead) {
+          issues.push({
+            severity: 'critical',
+            category: 'public_access',
+            issue: 'S3 bucket ACL allows public read access',
+            recommendation: 'Remove public read permissions from bucket ACL. Use AWS S3 Block Public Access feature.',
+            resource_arn: resource.resource_arn,
+          });
+        }
+      } catch (error: any) {
+        console.error('[Compliance] Error checking S3 ACL:', error.message);
+      }
+
+      // Check bucket policy for public access
+      try {
+        const { Policy } = await s3Client.send(
+          new GetBucketPolicyCommand({ Bucket: resource.resource_id })
+        );
+
+        if (Policy) {
+          const policyDoc = JSON.parse(Policy);
+
+          // Check for wildcard principals
+          if (Policy.includes('"Principal":"*"') || Policy.includes('"Principal":{"AWS":"*"}')) {
+            issues.push({
+              severity: 'critical',
+              category: 'public_access',
+              issue: 'S3 bucket policy allows public access (wildcard principal)',
+              recommendation: 'Restrict bucket policy to specific IAM principals or AWS accounts only.',
+              resource_arn: resource.resource_arn,
+            });
+          }
+        }
+      } catch (error: any) {
+        // NoSuchBucketPolicy error is expected for buckets without policies
+        if (error.name !== 'NoSuchBucketPolicy') {
+          console.error('[Compliance] Error checking S3 policy:', error.message);
+        }
+      }
+    } catch (error: any) {
+      console.error('[Compliance] Error in S3 public access check:', error.message);
+    }
+
+    return issues;
+  }
+
+  /**
+   * Check for overly permissive security groups
+   * Identifies security groups with 0.0.0.0/0 ingress rules
+   */
+  async checkSecurityGroups(region: string, accountId?: string): Promise<ComplianceIssue[]> {
+    const issues: ComplianceIssue[] = [];
+
+    try {
+      const ec2Client = new EC2Client({ region });
+      const { SecurityGroups } = await ec2Client.send(new DescribeSecurityGroupsCommand({}));
+
+      for (const sg of SecurityGroups || []) {
+        // Check for 0.0.0.0/0 ingress rules
+        const openRules = sg.IpPermissions?.filter(rule =>
+          rule.IpRanges?.some(range => range.CidrIp === '0.0.0.0/0')
+        );
+
+        if (openRules && openRules.length > 0) {
+          for (const rule of openRules) {
+            const fromPort = rule.FromPort || 0;
+            const toPort = rule.ToPort || 65535;
+
+            // Critical if SSH (22) or RDP (3389) is open to the world
+            if (fromPort <= 22 && toPort >= 22) {
+              issues.push({
+                severity: 'critical',
+                category: 'networking',
+                issue: `Security group "${sg.GroupName}" (${sg.GroupId}) allows SSH (port 22) from anywhere (0.0.0.0/0)`,
+                recommendation: 'Restrict SSH access to specific IP addresses or use AWS Systems Manager Session Manager instead.',
+                resource_arn: `arn:aws:ec2:${region}:${accountId || '*'}:security-group/${sg.GroupId}`,
+              });
+            } else if (fromPort <= 3389 && toPort >= 3389) {
+              issues.push({
+                severity: 'critical',
+                category: 'networking',
+                issue: `Security group "${sg.GroupName}" (${sg.GroupId}) allows RDP (port 3389) from anywhere (0.0.0.0/0)`,
+                recommendation: 'Restrict RDP access to specific IP addresses or use a bastion host.',
+                resource_arn: `arn:aws:ec2:${region}:${accountId || '*'}:security-group/${sg.GroupId}`,
+              });
+            } else {
+              issues.push({
+                severity: 'high',
+                category: 'networking',
+                issue: `Security group "${sg.GroupName}" (${sg.GroupId}) allows port ${fromPort}${fromPort !== toPort ? `-${toPort}` : ''} from anywhere (0.0.0.0/0)`,
+                recommendation: 'Restrict access to known IP ranges or use security group references for inter-resource communication.',
+                resource_arn: `arn:aws:ec2:${region}:${accountId || '*'}:security-group/${sg.GroupId}`,
+              });
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('[Compliance] Error checking security groups:', error.message);
+    }
+
+    return issues;
+  }
+
+  /**
+   * Check IAM security best practices
+   * Checks for MFA on users and access key rotation
+   */
+  async checkIAMSecurity(): Promise<ComplianceIssue[]> {
+    const issues: ComplianceIssue[] = [];
+
+    try {
+      const iamClient = new IAMClient({ region: 'us-east-1' }); // IAM is global
+      const { Users } = await iamClient.send(new ListUsersCommand({}));
+
+      for (const user of Users || []) {
+        if (!user.UserName || !user.Arn) continue;
+
+        // Check if user has MFA enabled
+        try {
+          const { MFADevices } = await iamClient.send(
+            new ListMFADevicesCommand({ UserName: user.UserName })
+          );
+
+          if (!MFADevices || MFADevices.length === 0) {
+            issues.push({
+              severity: 'high',
+              category: 'iam',
+              issue: `IAM user "${user.UserName}" does not have MFA enabled`,
+              recommendation: 'Enable multi-factor authentication (MFA) for all IAM users, especially those with console access.',
+              resource_arn: user.Arn,
+            });
+          }
+        } catch (error: any) {
+          console.error(`[Compliance] Error checking MFA for user ${user.UserName}:`, error.message);
+        }
+
+        // Check for old access keys (>90 days)
+        try {
+          const { AccessKeyMetadata } = await iamClient.send(
+            new ListAccessKeysCommand({ UserName: user.UserName })
+          );
+
+          for (const key of AccessKeyMetadata || []) {
+            if (!key.CreateDate || !key.AccessKeyId) continue;
+
+            const ageInDays = Math.floor(
+              (Date.now() - key.CreateDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            if (ageInDays > 90) {
+              issues.push({
+                severity: 'medium',
+                category: 'iam',
+                issue: `IAM user "${user.UserName}" has an access key (${key.AccessKeyId}) that is ${ageInDays} days old`,
+                recommendation: 'Rotate access keys every 90 days. Create a new key, update applications, then delete the old key.',
+                resource_arn: user.Arn,
+              });
+            }
+
+            // Warning for very old keys (>180 days)
+            if (ageInDays > 180) {
+              issues.push({
+                severity: 'high',
+                category: 'iam',
+                issue: `IAM user "${user.UserName}" has an access key (${key.AccessKeyId}) that is ${ageInDays} days old (>180 days)`,
+                recommendation: 'URGENT: Rotate this access key immediately. Keys over 180 days old pose a significant security risk.',
+                resource_arn: user.Arn,
+              });
+            }
+          }
+        } catch (error: any) {
+          console.error(`[Compliance] Error checking access keys for user ${user.UserName}:`, error.message);
+        }
+      }
+    } catch (error: any) {
+      console.error('[Compliance] Error checking IAM security:', error.message);
+    }
+
+    return issues;
   }
 }

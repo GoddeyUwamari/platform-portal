@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign } from 'lucide-react';
+import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign, Tags } from 'lucide-react';
 import { awsResourcesService, ResourceFilters } from '@/lib/services/aws-resources.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import {
   Table,
@@ -19,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { BulkTagDialog } from '@/components/aws-resources/BulkTagDialog';
 
 export default function AWSResourcesPage() {
   const queryClient = useQueryClient();
@@ -26,6 +28,8 @@ export default function AWSResourcesPage() {
     page: 1,
     limit: 50,
   });
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
+  const [isBulkTagDialogOpen, setIsBulkTagDialogOpen] = useState(false);
 
   // Fetch resources
   const { data: resourcesData, isLoading: resourcesLoading } = useQuery({
@@ -41,8 +45,19 @@ export default function AWSResourcesPage() {
 
   // Discovery mutation
   const discoveryMutation = useMutation({
-    mutationFn: () => awsResourcesService.discover(),
-    onSuccess: () => {
+    mutationFn: async () => {
+      console.log('🚀 Calling awsResourcesService.discover()...');
+      try {
+        const result = await awsResourcesService.discover();
+        console.log('✅ Discovery API call successful:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ Discovery API call failed:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      console.log('🎉 Discovery mutation onSuccess triggered:', data);
       toast.success('Resource discovery started', {
         description: 'AWS resources are being scanned. This may take a few minutes.',
       });
@@ -53,6 +68,7 @@ export default function AWSResourcesPage() {
       }, 10000);
     },
     onError: (error: any) => {
+      console.error('💥 Discovery mutation onError triggered:', error);
       toast.error('Discovery failed', {
         description: error.message || 'Failed to start resource discovery',
       });
@@ -60,7 +76,14 @@ export default function AWSResourcesPage() {
   });
 
   const handleDiscovery = () => {
-    discoveryMutation.mutate();
+    console.log('🔍 Discovery button clicked');
+    console.log('🔍 Mutation state:', { isPending: discoveryMutation.isPending, isError: discoveryMutation.isError });
+    try {
+      discoveryMutation.mutate();
+      console.log('🔍 Mutation triggered successfully');
+    } catch (error) {
+      console.error('🔍 Error triggering mutation:', error);
+    }
   };
 
   const handleFilterChange = (key: keyof ResourceFilters, value: any) => {
@@ -76,6 +99,10 @@ export default function AWSResourcesPage() {
       case 'ec2': return <Server className="h-4 w-4" />;
       case 'rds': return <Database className="h-4 w-4" />;
       case 's3': return <HardDrive className="h-4 w-4" />;
+      case 'lambda': return <Cloud className="h-4 w-4" />;
+      case 'ecs': return <Server className="h-4 w-4" />;
+      case 'load-balancer': return <Server className="h-4 w-4" />;
+      case 'vpc': return <Cloud className="h-4 w-4" />;
       default: return <Cloud className="h-4 w-4" />;
     }
   };
@@ -90,8 +117,8 @@ export default function AWSResourcesPage() {
     }
   };
 
-  const resources = resourcesData?.data?.resources || [];
-  const total = resourcesData?.data?.total || 0;
+  const resources = resourcesData?.resources || [];
+  const total = resourcesData?.total || 0;
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -124,7 +151,7 @@ export default function AWSResourcesPage() {
             {statsLoading ? (
               <Skeleton className="h-8 w-20" />
             ) : (
-              <div className="text-2xl font-bold">{stats?.data?.total_resources || 0}</div>
+              <div className="text-2xl font-bold">{stats?.total_resources || 0}</div>
             )}
             <p className="text-xs text-muted-foreground mt-1">
               Across all regions
@@ -142,7 +169,7 @@ export default function AWSResourcesPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="text-2xl font-bold">
-                ${(stats?.data?.total_monthly_cost || 0).toFixed(2)}
+                ${(stats?.total_monthly_cost || 0).toFixed(2)}
               </div>
             )}
             <p className="text-xs text-muted-foreground mt-1">
@@ -162,19 +189,19 @@ export default function AWSResourcesPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {stats?.data?.compliance_stats?.total_issues || 0}
+                  {stats?.compliance_stats?.total_issues || 0}
                 </div>
                 <div className="flex gap-1 mt-2">
-                  {stats?.data?.compliance_stats && (
+                  {stats?.compliance_stats && (
                     <>
-                      {stats.data.compliance_stats.by_severity.critical > 0 && (
+                      {stats.compliance_stats.by_severity.critical > 0 && (
                         <Badge variant="destructive" className="text-xs">
-                          {stats.data.compliance_stats.by_severity.critical} Critical
+                          {stats.compliance_stats.by_severity.critical} Critical
                         </Badge>
                       )}
-                      {stats.data.compliance_stats.by_severity.high > 0 && (
+                      {stats.compliance_stats.by_severity.high > 0 && (
                         <Badge variant="destructive" className="text-xs">
-                          {stats.data.compliance_stats.by_severity.high} High
+                          {stats.compliance_stats.by_severity.high} High
                         </Badge>
                       )}
                     </>
@@ -196,10 +223,10 @@ export default function AWSResourcesPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {(stats?.data?.unencrypted_count || 0) + (stats?.data?.public_count || 0)}
+                  {(stats?.unencrypted_count || 0) + (stats?.public_count || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats?.data?.unencrypted_count || 0} unencrypted, {stats?.data?.public_count || 0} public
+                  {stats?.unencrypted_count || 0} unencrypted, {stats?.public_count || 0} public
                 </p>
               </>
             )}
@@ -242,6 +269,10 @@ export default function AWSResourcesPage() {
                   <SelectItem value="ec2">EC2 Instances</SelectItem>
                   <SelectItem value="rds">RDS Databases</SelectItem>
                   <SelectItem value="s3">S3 Buckets</SelectItem>
+                  <SelectItem value="lambda">Lambda Functions</SelectItem>
+                  <SelectItem value="ecs">ECS Services</SelectItem>
+                  <SelectItem value="load-balancer">Load Balancers</SelectItem>
+                  <SelectItem value="vpc">VPCs</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -288,6 +319,35 @@ export default function AWSResourcesPage() {
         </CardContent>
       </Card>
 
+      {/* Bulk Actions */}
+      {selectedResourceIds.length > 0 && (
+        <Card className="bg-muted/50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">
+                {selectedResourceIds.length} resource{selectedResourceIds.length !== 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setIsBulkTagDialogOpen(true)}
+                >
+                  <Tags className="h-4 w-4 mr-2" />
+                  Bulk Tag
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedResourceIds([])}
+                >
+                  Clear Selection
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Resources Table */}
       <Card>
         <CardHeader>
@@ -314,6 +374,18 @@ export default function AWSResourcesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedResourceIds.length === resources.length && resources.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedResourceIds(resources.map((r: any) => r.id));
+                          } else {
+                            setSelectedResourceIds([]);
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Resource</TableHead>
                     <TableHead className="whitespace-nowrap">Type</TableHead>
                     <TableHead className="whitespace-nowrap">Region</TableHead>
@@ -326,6 +398,18 @@ export default function AWSResourcesPage() {
                 <TableBody>
                   {resources.map((resource: any) => (
                     <TableRow key={resource.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedResourceIds.includes(resource.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedResourceIds([...selectedResourceIds, resource.id]);
+                            } else {
+                              setSelectedResourceIds(selectedResourceIds.filter(id => id !== resource.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{resource.resource_name || resource.resource_id}</div>
@@ -342,7 +426,7 @@ export default function AWSResourcesPage() {
                       <TableCell>
                         <Badge variant="outline">{resource.status || 'Unknown'}</Badge>
                       </TableCell>
-                      <TableCell>${resource.estimated_monthly_cost.toFixed(2)}</TableCell>
+                      <TableCell>${(parseFloat(resource.estimated_monthly_cost) || 0).toFixed(2)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           {resource.is_encrypted ? (
@@ -372,6 +456,17 @@ export default function AWSResourcesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bulk Tag Dialog */}
+      <BulkTagDialog
+        open={isBulkTagDialogOpen}
+        onOpenChange={setIsBulkTagDialogOpen}
+        selectedResourceIds={selectedResourceIds}
+        onSuccess={() => {
+          setSelectedResourceIds([]);
+          queryClient.invalidateQueries({ queryKey: ['aws-resources'] });
+        }}
+      />
     </div>
   );
 }
