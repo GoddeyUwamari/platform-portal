@@ -57,7 +57,7 @@ function sanitizeObject(obj: any): any {
 
 /**
  * Fields that should NOT be sanitized
- * (e.g., password fields, hashed values, etc.)
+ * (e.g., password fields, hashed values, URLs, etc.)
  */
 const SKIP_SANITIZATION_FIELDS = [
   'password',
@@ -70,6 +70,14 @@ const SKIP_SANITIZATION_FIELDS = [
   'refreshToken',
   'accessToken',
   'hash',
+  // URL fields (contain forward slashes that shouldn't be encoded)
+  'url',
+  'successUrl',
+  'cancelUrl',
+  'returnUrl',
+  'redirectUrl',
+  'callbackUrl',
+  'webhookUrl',
 ];
 
 /**
