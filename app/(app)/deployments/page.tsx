@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Rocket, AlertCircle, FileText } from 'lucide-react'
+import { EmptyState } from '@/components/onboarding/empty-state'
+import { useDemoMode } from '@/components/demo/demo-mode-toggle'
 import { Badge } from '@/components/ui/badge'
 import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import Link from 'next/link'
@@ -79,24 +81,13 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   )
 }
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center p-12 space-y-4 border rounded-lg">
-      <Rocket className="h-12 w-12 text-muted-foreground" />
-      <div className="text-center">
-        <h3 className="text-lg font-semibold">No deployments found</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Deployments will appear here when services are deployed via CLI
-        </p>
-      </div>
-    </div>
-  )
-}
+// EmptyState component now imported from onboarding
 
 export default function DeploymentsPage() {
   const [environmentFilter, setEnvironmentFilter] = useState<EnvironmentFilter>('all')
   const { socket } = useWebSocket()
   const queryClient = useQueryClient()
+  const demoMode = useDemoMode()
 
   const { data: deployments = [], isLoading, error, refetch } = useQuery({
     queryKey: ['deployments', environmentFilter],
@@ -228,8 +219,24 @@ export default function DeploymentsPage() {
           message={(error as Error).message}
           onRetry={() => refetch()}
         />
-      ) : deployments.length === 0 ? (
-        <EmptyState />
+      ) : (demoMode || deployments.length === 0) ? (
+        <EmptyState
+          icon="🚀"
+          headline="Your deployment history lives here"
+          description="Every push to production, staging, and dev — tracked automatically. See what shipped, when, and by whom. Create a service first, then log your first deployment."
+          tip="Once you have deployments, you'll unlock DORA metrics and performance benchmarks."
+          primaryCTA={{
+            label: 'Go to Services',
+            action: 'route',
+            route: '/services',
+          }}
+          secondaryCTA={{
+            label: 'Learn About Deployments',
+            action: 'external',
+            href: 'https://docs.example.com/deployments',
+          }}
+          onboardingStep="log_deployment"
+        />
       ) : (
         <div className="border rounded-lg">
           <Table>

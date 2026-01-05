@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, AlertCircle, Layers, Github } from 'lucide-react'
+import { Plus, AlertCircle, Github } from 'lucide-react'
+import { useDemoMode } from '@/components/demo/demo-mode-toggle'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Breadcrumb } from '@/components/navigation/breadcrumb'
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { servicesService } from '@/lib/services/services.service'
-import type { Service, ServiceStatus } from '@/lib/types'
+import type { ServiceStatus } from '@/lib/types'
 
 type StatusFilter = 'all' | ServiceStatus
 
@@ -76,30 +77,16 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   )
 }
 
-import { EmptyState as EmptyStateComponent } from '@/components/ui/empty-state'
-
-// Empty State Component
-function EmptyState() {
-  return (
-    <EmptyStateComponent
-      icon={Layers}
-      title="No services yet"
-      description="Deploy your first service to start tracking deployments and infrastructure. Services are the building blocks of your platform."
-      action={{
-        label: 'Create Service',
-        onClick: () => router.push('/services/new'),
-      }}
-      secondaryAction={{
-        label: 'Learn More',
-        onClick: () => window.open('https://docs.example.com', '_blank'),
-      }}
-    />
-  )
-}
+import { QuickStartOptions } from '@/components/services/QuickStartOptions'
+import { ServicePreview } from '@/components/services/ServicePreview'
+import { ServiceBenefits } from '@/components/services/ServiceBenefits'
+import { ServiceResources } from '@/components/services/ServiceResources'
+import { ProTip } from '@/components/services/ProTip'
 
 export default function ServicesPage() {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const demoMode = useDemoMode()
 
   const { data: services = [], isLoading, error, refetch } = useQuery({
     queryKey: ['services', statusFilter],
@@ -193,8 +180,23 @@ export default function ServicesPage() {
           message={(error as Error).message}
           onRetry={() => refetch()}
         />
-      ) : services.length === 0 ? (
-        <EmptyState />
+      ) : (demoMode || services.length === 0) ? (
+        <>
+          {/* Quick Start Options */}
+          <QuickStartOptions />
+
+          {/* Service Preview */}
+          <ServicePreview />
+
+          {/* Value Proposition */}
+          <ServiceBenefits />
+
+          {/* Resources */}
+          <ServiceResources />
+
+          {/* Pro Tip */}
+          <ProTip />
+        </>
       ) : (
         <div className="border rounded-lg overflow-x-auto">
           <Table>

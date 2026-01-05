@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Shield, Filter, Calendar, User, Activity } from 'lucide-react';
+import { Shield, Filter, User, Activity } from 'lucide-react';
 import { auditLogsService, AuditLogFilters } from '@/lib/services/audit-logs.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

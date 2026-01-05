@@ -1,8 +1,10 @@
 /**
  * Frontend Stripe Service
  * Handles communication with backend Stripe API
+ * Uses authenticated API client for automatic JWT token handling
  */
 
+import { api } from '@/lib/api';
 import {
   CheckoutSessionResponse,
   SubscriptionResponse,
@@ -11,16 +13,6 @@ import {
   CancelSubscriptionResponse,
   SubscriptionTier,
 } from '@/types/billing';
-import { tokenManager } from './auth.service'; // ✅ ADDED THIS
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
-/**
- * Get auth token from tokenManager
- */
-function getAuthToken(): string | null {
-  return tokenManager.getAccessToken(); // ✅ FIXED: Use tokenManager instead of localStorage
-}
 
 /**
  * Create a Stripe Checkout session and redirect to checkout
@@ -30,36 +22,21 @@ export async function createCheckoutSession(
   priceId: string
 ): Promise<CheckoutSessionResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/stripe/create-checkout-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+    const response = await api.post<CheckoutSessionResponse>(
+      '/api/stripe/create-checkout-session',
+      {
         priceId,
         successUrl: `${window.location.origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/billing/cancel`,
-      }),
-    });
+      }
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to create checkout session');
-    }
-
-    return data;
+    return response.data;
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
     return {
       success: false,
-      error: error.message || 'Failed to create checkout session',
+      error: error.response?.data?.error || error.message || 'Failed to create checkout session',
     };
   }
 }
@@ -69,30 +46,13 @@ export async function createCheckoutSession(
  */
 export async function getSubscription(): Promise<SubscriptionResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/stripe/subscription`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to get subscription');
-    }
-
-    return data;
+    const response = await api.get<SubscriptionResponse>('/api/stripe/subscription');
+    return response.data;
   } catch (error: any) {
     console.error('Error getting subscription:', error);
     return {
       success: false,
-      error: error.message || 'Failed to get subscription',
+      error: error.response?.data?.error || error.message || 'Failed to get subscription',
     };
   }
 }
@@ -102,30 +62,13 @@ export async function getSubscription(): Promise<SubscriptionResponse> {
  */
 export async function getInvoices(): Promise<InvoicesResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/stripe/invoices`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to get invoices');
-    }
-
-    return data;
+    const response = await api.get<InvoicesResponse>('/api/stripe/invoices');
+    return response.data;
   } catch (error: any) {
     console.error('Error getting invoices:', error);
     return {
       success: false,
-      error: error.message || 'Failed to get invoices',
+      error: error.response?.data?.error || error.message || 'Failed to get invoices',
     };
   }
 }
@@ -135,34 +78,19 @@ export async function getInvoices(): Promise<InvoicesResponse> {
  */
 export async function openCustomerPortal(): Promise<CustomerPortalResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/stripe/customer-portal`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+    const response = await api.post<CustomerPortalResponse>(
+      '/api/stripe/customer-portal',
+      {
         returnUrl: `${window.location.origin}/settings/billing`,
-      }),
-    });
+      }
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to open customer portal');
-    }
-
-    return data;
+    return response.data;
   } catch (error: any) {
     console.error('Error opening customer portal:', error);
     return {
       success: false,
-      error: error.message || 'Failed to open customer portal',
+      error: error.response?.data?.error || error.message || 'Failed to open customer portal',
     };
   }
 }
@@ -174,32 +102,17 @@ export async function cancelSubscription(
   immediate: boolean = false
 ): Promise<CancelSubscriptionResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
+    const response = await api.post<CancelSubscriptionResponse>(
+      '/api/stripe/cancel-subscription',
+      { immediate }
+    );
 
-    const response = await fetch(`${API_BASE_URL}/api/stripe/cancel-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ immediate }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to cancel subscription');
-    }
-
-    return data;
+    return response.data;
   } catch (error: any) {
     console.error('Error canceling subscription:', error);
     return {
       success: false,
-      error: error.message || 'Failed to cancel subscription',
+      error: error.response?.data?.error || error.message || 'Failed to cancel subscription',
     };
   }
 }
@@ -209,31 +122,17 @@ export async function cancelSubscription(
  */
 export async function resumeSubscription(): Promise<SubscriptionResponse> {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
+    const response = await api.post<SubscriptionResponse>(
+      '/api/stripe/resume-subscription',
+      {}
+    );
 
-    const response = await fetch(`${API_BASE_URL}/api/stripe/resume-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to resume subscription');
-    }
-
-    return data;
+    return response.data;
   } catch (error: any) {
     console.error('Error resuming subscription:', error);
     return {
       success: false,
-      error: error.message || 'Failed to resume subscription',
+      error: error.response?.data?.error || error.message || 'Failed to resume subscription',
     };
   }
 }

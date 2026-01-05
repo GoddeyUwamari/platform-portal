@@ -5,6 +5,8 @@ import {
   UpdateDependencyRequest,
   DependencyFilters,
   DependencyGraph,
+  DependencyGraphNode,
+  DependencyGraphEdge,
   ImpactAnalysis,
   CircularDependency,
 } from '../types';

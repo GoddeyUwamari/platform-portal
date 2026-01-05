@@ -360,6 +360,16 @@ export class OrganizationController {
         region,
       });
 
+      // Emit onboarding event for AWS connection
+      const user = (req as any).user;
+      if (user) {
+        const { emitOnboardingEvent } = require('../services/onboardingEvents');
+        emitOnboardingEvent('aws:connected', {
+          organizationId: id,
+          userId: user.userId || user.id,
+        });
+      }
+
       res.status(200).json({
         success: true,
         message: 'AWS credentials saved successfully',

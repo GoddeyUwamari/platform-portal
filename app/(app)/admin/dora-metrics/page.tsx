@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp,
-  TrendingDown,
   Activity,
   Clock,
   AlertTriangle,
@@ -216,7 +215,7 @@ export default function DORAMetricsPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">DORA Metrics Dashboard</h1>
         <p className="text-muted-foreground">
-          Track the 4 key DevOps Research and Assessment (DORA) metrics to measure your team's
+          Track the 4 key DevOps Research and Assessment (DORA) metrics to measure your team&apos;s
           software delivery performance
         </p>
       </div>

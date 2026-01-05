@@ -15,6 +15,7 @@ import awsResourcesRoutes from './awsResources.routes';
 import logsRoutes from './logs.routes';
 import auditLogsRoutes from './auditLogs.routes';
 import stripeRoutes from './stripe.routes';
+import onboardingRoutes from './onboarding.routes';
 
 const router = Router();
 
@@ -38,6 +39,7 @@ router.use('/metrics/dora', doraMetricsRoutes);
 router.use('/alerts', alertHistoryRoutes);
 router.use('/audit-logs', auditLogsRoutes);
 router.use('/stripe', stripeRoutes);
+router.use('/onboarding', onboardingRoutes);
 router.use('/', logsRoutes);
 
 // API root
@@ -62,6 +64,7 @@ router.get('/', (req, res) => {
       alerts: '/api/alerts',
       auditLogs: '/api/audit-logs',
       stripe: '/api/stripe',
+      onboarding: '/api/onboarding',
       logs: '/api/logs',
     },
   });

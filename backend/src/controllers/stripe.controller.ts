@@ -427,8 +427,11 @@ export class StripeController {
    */
   async handleWebhook(req: Request, res: Response): Promise<void> {
     try {
-      const signature = req.headers['stripe-signature'] as string;
+      console.log('🔍 DEBUG: req.body type:', typeof req.body);
+      console.log('🔍 DEBUG: req.body is Buffer?', Buffer.isBuffer(req.body));
+      console.log('🔍 DEBUG: req.body constructor:', req.body?.constructor?.name);
 
+      const signature = req.headers['stripe-signature'] as string;
       if (!signature) {
         res.status(400).json({
           success: false,
@@ -437,8 +440,23 @@ export class StripeController {
         return;
       }
 
-      // Verify webhook signature
-      const event = stripeService.verifyWebhookSignature(req.body, signature);
+      // ✅ Get raw payload - must be Buffer or string, not parsed object
+      let payload: string | Buffer;
+      if (Buffer.isBuffer(req.body)) {
+        payload = req.body;
+      } else if (typeof req.body === 'string') {
+        payload = req.body;
+      } else {
+        console.error('❌ req.body is not Buffer or string, it is:', typeof req.body, req.body?.constructor?.name);
+        res.status(400).json({
+          success: false,
+          error: 'Webhook body must be raw (not parsed JSON)',
+        });
+        return;
+      }
+
+      // Verify webhook signature with raw payload
+      const event = stripeService.verifyWebhookSignature(payload, signature);
 
       if (!event) {
         res.status(400).json({
@@ -448,79 +466,136 @@ export class StripeController {
         return;
       }
 
-      console.log(`Received webhook: ${event.type}`);
+      console.log('🔔 Webhook received:', event.type);
+      console.log('📦 Event ID:', event.id);
+      console.log('🔍 Event data:', JSON.stringify(event.data.object, null, 2));
 
       // Handle different event types
       switch (event.type) {
         case 'checkout.session.completed':
+          console.log('💳 Processing checkout.session.completed');
           await this.handleCheckoutSessionCompleted(event.data.object);
           break;
 
         case 'customer.subscription.created':
         case 'customer.subscription.updated':
+          console.log('📋 Processing subscription event:', event.type);
           await this.handleSubscriptionUpdated(event.data.object);
           break;
 
         case 'customer.subscription.deleted':
+          console.log('🗑️ Processing subscription deletion');
           await this.handleSubscriptionDeleted(event.data.object);
           break;
 
         case 'invoice.payment_succeeded':
+          console.log('✅ Processing successful payment');
           await this.handleInvoicePaymentSucceeded(event.data.object);
           break;
 
         case 'invoice.payment_failed':
+          console.log('❌ Processing failed payment');
           await this.handleInvoicePaymentFailed(event.data.object);
           break;
 
         default:
-          console.log(`Unhandled event type: ${event.type}`);
+          console.log('ℹ️ Unhandled event type:', event.type);
       }
 
-      res.status(200).json({ received: true });
-    } catch (error: any) {
-      console.error('Error handling webhook:', error);
-      res.status(500).json({
+      console.log('✅ Webhook processed successfully');
+      res.json({ success: true, received: true });
+    } catch (error) {
+      console.error('❌ Webhook error:', error);
+      res.status(400).json({
         success: false,
-        error: error.message || 'Webhook handler failed',
+        error: error instanceof Error ? error.message : 'Webhook processing failed'
       });
     }
   }
-
   // Webhook event handlers
   private async handleCheckoutSessionCompleted(session: any): Promise<void> {
-    const organizationId = session.metadata?.organizationId;
-    if (!organizationId) return;
+    try {
+      const organizationId = session.metadata?.organizationId;
+      if (!organizationId) {
+        console.warn('⚠️ No organizationId in session metadata');
+        return;
+      }
 
-    console.log(`Checkout completed for organization ${organizationId}`);
+      console.log(`💳 Checkout completed for organization ${organizationId}`);
 
-    // Subscription will be handled by subscription.created event
+      const customerId = session.customer;
+      const subscriptionId = session.subscription;
+
+      console.log(`👤 Customer ID: ${customerId}`);
+      console.log(`📋 Subscription ID: ${subscriptionId}`);
+
+      if (!subscriptionId) {
+        console.warn('⚠️ No subscription ID in checkout session');
+        return;
+      }
+
+      // Get full subscription details to extract price ID and tier
+      const subscription = await stripeService.getSubscription(subscriptionId);
+      const priceId = subscription.items.data[0]?.price.id;
+      const tier = stripeService.getTierFromPriceId(priceId);
+
+      console.log(`💰 Price ID: ${priceId}`);
+      console.log(`🎯 Detected tier: ${tier}`);
+
+      // Update organization with subscription details
+      await stripeService.updateOrganizationSubscription(organizationId, {
+        subscriptionId: subscriptionId,
+        status: subscription.status,
+        tier,
+        currentPeriodStart: (subscription as any).current_period_start ? new Date((subscription as any).current_period_start * 1000) : undefined,
+        currentPeriodEnd: (subscription as any).current_period_end ? new Date((subscription as any).current_period_end * 1000) : undefined,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      });
+
+      console.log(`✅ Organization ${organizationId} updated to ${tier} tier`);
+    } catch (error) {
+      console.error('❌ Error handling checkout session completed:', error);
+      throw error;
+    }
   }
 
   private async handleSubscriptionUpdated(subscription: any): Promise<void> {
-    const customerId = subscription.customer;
-    const organization = await stripeService.getOrganizationByCustomerId(customerId);
+    try {
+      const customerId = subscription.customer;
+      console.log(`👤 Looking up organization for customer ${customerId}`);
 
-    if (!organization) {
-      console.error(`Organization not found for customer ${customerId}`);
-      return;
+      const organization = await stripeService.getOrganizationByCustomerId(customerId);
+
+      if (!organization) {
+        console.error(`❌ Organization not found for customer ${customerId}`);
+        return;
+      }
+
+      console.log(`🏢 Found organization: ${organization.id} (${organization.name})`);
+
+      // Get tier from price ID
+      const priceId = subscription.items.data[0]?.price.id;
+      const tier = stripeService.getTierFromPriceId(priceId);
+
+      console.log(`💰 Price ID: ${priceId}`);
+      console.log(`🎯 Detected tier: ${tier}`);
+      console.log(`📊 Subscription status: ${subscription.status}`);
+
+      // Update organization
+      await stripeService.updateOrganizationSubscription(organization.id, {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        tier,
+        currentPeriodStart: (subscription as any).current_period_start ? new Date((subscription as any).current_period_start * 1000) : undefined,
+        currentPeriodEnd: (subscription as any).current_period_end ? new Date((subscription as any).current_period_end * 1000) : undefined,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      });
+
+      console.log(`✅ Updated subscription for organization ${organization.id} to ${tier} tier`);
+    } catch (error) {
+      console.error('❌ Error handling subscription update:', error);
+      throw error;
     }
-
-    // Get tier from price ID
-    const priceId = subscription.items.data[0]?.price.id;
-    const tier = stripeService.getTierFromPriceId(priceId);
-
-    // Update organization
-    await stripeService.updateOrganizationSubscription(organization.id, {
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      tier,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    });
-
-    console.log(`Updated subscription for organization ${organization.id} to ${tier}`);
   }
 
   private async handleSubscriptionDeleted(subscription: any): Promise<void> {

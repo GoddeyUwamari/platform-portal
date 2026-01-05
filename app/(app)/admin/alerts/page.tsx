@@ -8,7 +8,6 @@ import {
   Clock,
   AlertCircle,
   Trash2,
-  Filter,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { alertHistoryService } from '@/lib/services/alert-history.service';
-import { Alert, AlertFilters, DateRangeOption } from '@/lib/types';
+import { AlertFilters, DateRangeOption } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Breadcrumb } from '@/components/navigation/breadcrumb';
 

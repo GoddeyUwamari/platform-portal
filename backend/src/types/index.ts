@@ -204,3 +204,114 @@ export interface RecommendationStats {
     low: number;
   };
 }
+
+// Service Dependencies
+export interface ServiceDependency {
+  id: string;
+  organization_id: string;
+  source_service_id: string;
+  target_service_id: string;
+  dependency_type: 'api' | 'database' | 'event' | 'data' | 'other';
+  description?: string;
+  is_critical: boolean;
+  metadata?: Record<string, any>;
+  created_by: string;
+  created_at: Date;
+  updated_at: Date;
+  // Joined fields from services table
+  source_service_name?: string;
+  target_service_name?: string;
+  source_service_status?: string;
+  target_service_status?: string;
+}
+
+export interface CreateDependencyRequest {
+  source_service_id: string;
+  target_service_id: string;
+  dependency_type: 'api' | 'database' | 'event' | 'data' | 'other';
+  description?: string;
+  is_critical?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface UpdateDependencyRequest {
+  dependency_type?: 'api' | 'database' | 'event' | 'data' | 'other';
+  description?: string;
+  is_critical?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface DependencyFilters extends PaginationQuery {
+  source_service_id?: string;
+  target_service_id?: string;
+  dependency_type?: string;
+  is_critical?: boolean;
+}
+
+// Dependency Graph (for React Flow visualization)
+export interface DependencyGraphNode {
+  id: string;
+  type: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  data: {
+    label: string;
+    status: string;
+    owner: string;
+    template: string;
+  };
+}
+
+export interface DependencyGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  label: string;
+  animated: boolean;
+  data: {
+    dependency_type: string;
+    is_critical: boolean;
+    description?: string;
+  };
+}
+
+export interface DependencyGraph {
+  nodes: DependencyGraphNode[];
+  edges: DependencyGraphEdge[];
+}
+
+// Impact Analysis
+export interface ImpactAnalysis {
+  service_id: string;
+  service_name: string;
+  upstream_dependencies: Array<{
+    id: string;
+    name: string;
+    dependency_type: string;
+    is_critical: boolean;
+  }>;
+  downstream_dependencies: Array<{
+    id: string;
+    name: string;
+    dependency_type: string;
+    is_critical: boolean;
+  }>;
+  total_upstream: number;
+  total_downstream: number;
+  total_affected_if_fails: number;
+  critical_path: boolean;
+}
+
+// Circular Dependency Detection
+export interface CircularDependency {
+  cycle: Array<{
+    service_id: string;
+    service_name: string;
+  }>;
+  path: string;
+  dependency_ids: string[];
+  severity: string;
+}

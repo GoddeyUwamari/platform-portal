@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ServicesRepository } from '../repositories/services.repository';
 import { CreateServiceRequest, UpdateServiceRequest, ServiceFilters, ApiResponse } from '../types';
 import { NotFoundError, DatabaseError } from '../utils/errors';
+import { emitOnboardingEvent } from '../services/onboardingEvents';
 
 const repository = new ServicesRepository();
 
@@ -54,6 +55,16 @@ export class ServicesController {
     try {
       const serviceData: CreateServiceRequest = req.body;
       const service = await repository.create(serviceData);
+
+      // Emit onboarding event for service creation
+      const user = (req as any).user;
+      if (user && service) {
+        emitOnboardingEvent('service:created', {
+          organizationId: user.organizationId || service.organization_id,
+          userId: user.userId || user.id,
+          serviceId: service.id,
+        });
+      }
 
       const response: ApiResponse = {
         success: true,

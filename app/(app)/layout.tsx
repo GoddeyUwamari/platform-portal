@@ -1,23 +1,43 @@
-import { TopNav } from '@/components/layout/top-nav'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { CommandPalette } from '@/components/command-palette'
-import { ConnectionIndicator } from '@/components/ConnectionIndicator'
+'use client';
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+import { useEffect } from 'react';
+import { TopNav } from '@/components/layout/top-nav';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { CommandPalette } from '@/components/command-palette';
+import { ConnectionIndicator } from '@/components/ConnectionIndicator';
+import { WelcomeModal } from '@/components/onboarding/welcome-modal';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { useOnboardingStore } from '@/lib/stores/onboarding-store';
+import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs';
+import { DemoModeToggle } from '@/components/demo/demo-mode-toggle';
+import { SalesDemoToggle } from '@/components/demo/sales-demo-toggle';
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const fetchStatus = useOnboardingStore((state) => state.fetchStatus);
+  const breadcrumbs = useBreadcrumbs();
+
+  // Fetch onboarding status on mount
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation - Shows on all authenticated pages */}
       <TopNav />
 
+      {/* Breadcrumb Navigation */}
+      {breadcrumbs.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+            <Breadcrumb items={breadcrumbs} />
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <main>
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
       {/* Command Palette (Cmd+K) */}
@@ -25,6 +45,15 @@ export default function AppLayout({
 
       {/* WebSocket Connection Indicator */}
       <ConnectionIndicator />
+
+      {/* Welcome Modal (Auto-opens on first login) */}
+      <WelcomeModal />
+
+      {/* Demo Mode Toggle (for testing empty states) */}
+      <DemoModeToggle />
+
+      {/* Sales Demo Mode Toggle (for sales presentations) */}
+      <SalesDemoToggle />
     </div>
-  )
+  );
 }

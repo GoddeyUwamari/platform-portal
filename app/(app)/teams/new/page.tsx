@@ -197,7 +197,7 @@ export default function CreateTeamPage() {
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Optional: Brief description of the team's responsibilities
+                      Optional: Brief description of the team&apos;s responsibilities
                     </FormDescription>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -219,7 +219,7 @@ export default function CreateTeamPage() {
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Optional: Team's Slack channel for notifications
+                      Optional: Team&apos;s Slack channel for notifications
                     </FormDescription>
                     <FormMessage className="text-xs" />
                   </FormItem>

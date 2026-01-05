@@ -252,7 +252,7 @@ export default function BillingPage() {
                 )}
                 {limits.resources !== 'unlimited' && resourceUsagePercent > 80 && (
                   <p className="text-xs text-amber-600 dark:text-amber-500">
-                    You're approaching your resource limit. Consider upgrading your plan.
+                    You&apos;re approaching your resource limit. Consider upgrading your plan.
                   </p>
                 )}
               </div>
@@ -268,7 +268,7 @@ export default function BillingPage() {
                 <Progress value={apiUsagePercent} className="h-2" />
                 {apiUsagePercent > 80 && (
                   <p className="text-xs text-amber-600 dark:text-amber-500">
-                    You're approaching your API request limit.
+                    You&apos;re approaching your API request limit.
                   </p>
                 )}
               </div>

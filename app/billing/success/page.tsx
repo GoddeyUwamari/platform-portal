@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { CheckCircle2, ArrowRight, Receipt } from 'lucide-react';
 import { getSubscription } from '@/lib/services/stripe.service';
 import { Subscription } from '@/types/billing';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -100,7 +100,7 @@ export default function CheckoutSuccessPage() {
                 {subscription?.status === 'trialing' && (
                   <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
                     <p className="text-sm text-blue-800 dark:text-blue-300">
-                      Your 14-day free trial has started! You won't be charged until{' '}
+                      Your 14-day free trial has started! You won&apos;t be charged until{' '}
                       {getNextBillingDate()}.
                     </p>
                   </div>
@@ -109,7 +109,7 @@ export default function CheckoutSuccessPage() {
 
               {/* What's Next */}
               <div className="border-t pt-6">
-                <h2 className="font-semibold mb-4">What's Next?</h2>
+                <h2 className="font-semibold mb-4">What&apos;s Next?</h2>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -168,5 +168,13 @@ export default function CheckoutSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

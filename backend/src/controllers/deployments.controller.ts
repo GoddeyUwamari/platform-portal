@@ -3,6 +3,7 @@ import { DeploymentsRepository } from '../repositories/deployments.repository';
 import { CreateDeploymentRequest, DeploymentFilters, ApiResponse } from '../types';
 import { DeploymentEvents } from '../services/deploymentEvents';
 import { WebSocketServer } from '../websocket/server';
+import { emitOnboardingEvent } from '../services/onboardingEvents';
 
 const repository = new DeploymentsRepository();
 
@@ -82,6 +83,16 @@ export class DeploymentsController {
       }
 
       const deployment = await repository.create(deploymentData);
+
+      // Emit onboarding event for deployment creation
+      const user = (req as any).user;
+      if (user && deployment) {
+        emitOnboardingEvent('deployment:created', {
+          organizationId: user.organizationId || deployment.organization_id,
+          userId: user.userId || user.id,
+          deploymentId: deployment.id,
+        });
+      }
 
       // Emit WebSocket event for deployment started
       try {

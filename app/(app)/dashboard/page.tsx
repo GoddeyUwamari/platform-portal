@@ -2,7 +2,23 @@
 
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle, FileText } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle } from 'lucide-react'
+import { OnboardingProgress } from '@/components/onboarding/progress-indicator'
+import { useOnboardingStage } from '@/lib/stores/onboarding-store'
+import { useDemoMode } from '@/components/demo/demo-mode-toggle'
+import { useSalesDemo } from '@/lib/demo/sales-demo-data'
+import { ROIHero } from '@/components/dashboard/roi-hero'
+import { EngineeringVelocity } from '@/components/dashboard/engineering-velocity'
+import { CostOptimizationWins } from '@/components/dashboard/cost-optimization-wins'
+import { TimeSaved } from '@/components/dashboard/time-saved'
+import { SecurityPosture } from '@/components/dashboard/security-posture'
+import { BeforeAfterTransformation } from '@/components/dashboard/before-after-transformation'
+import { CompetitiveBenchmarking } from '@/components/dashboard/competitive-benchmarking'
+import { WelcomeHero } from '@/components/dashboard/WelcomeHero'
+import { ValuePropCards } from '@/components/dashboard/ValuePropCards'
+import { QuickStartGuide } from '@/components/dashboard/QuickStartGuide'
+import { Testimonials } from '@/components/dashboard/Testimonials'
+import { ResourceLinks } from '@/components/dashboard/ResourceLinks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -124,24 +140,14 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   )
 }
 
-// Empty State Component
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-4">
-      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-        <FileText className="h-6 w-6 text-muted-foreground" />
-      </div>
-      <div className="text-center space-y-2">
-        <p className="font-medium text-foreground">No data available</p>
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </div>
-    </div>
-  )
-}
+// Empty State Component (deprecated - now using onboarding EmptyState)
 
 export default function DashboardPage() {
   const { socket, isConnected } = useWebSocket();
   const queryClient = useQueryClient();
+  const demoMode = useDemoMode();
+  const salesDemoMode = useSalesDemo((state) => state.enabled);
+  const createServiceStage = useOnboardingStage('create_service');
 
   // Fetch platform dashboard stats
   const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<PlatformDashboardStats>({
@@ -157,6 +163,14 @@ export default function DashboardPage() {
       return allDeployments.slice(0, 5); // Get latest 5
     },
   });
+
+  // Check if it's a completely empty state (no services and step not completed) OR demo mode
+  const isCompletelyEmpty = demoMode || (
+    !statsLoading &&
+    (stats?.totalServices === 0 || !stats) &&
+    (deployments.length === 0) &&
+    !createServiceStage?.completed
+  );
 
   // WebSocket event listeners for real-time updates
   useEffect(() => {
@@ -253,14 +267,62 @@ export default function DashboardPage() {
     )
   }
 
+  // Show high-converting empty state for first-time users
+  if (isCompletelyEmpty) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        {/* Hero Section - Full width, centered content */}
+        <section className="px-4 py-16">
+          <div className="mx-auto max-w-4xl">
+            <WelcomeHero />
+          </div>
+        </section>
+
+        {/* Value Props - Full width container */}
+        <section className="px-4 py-12">
+          <div className="mx-auto max-w-7xl">
+            <ValuePropCards />
+          </div>
+        </section>
+
+        {/* Quick Start - Light background */}
+        <section className="bg-white px-4 py-12">
+          <div className="mx-auto max-w-5xl">
+            <QuickStartGuide />
+          </div>
+        </section>
+
+        {/* Social Proof */}
+        <section className="px-4 py-12">
+          <div className="mx-auto max-w-6xl">
+            <Testimonials />
+          </div>
+        </section>
+
+        {/* Resources */}
+        <section className="px-4 py-8">
+          <div className="mx-auto max-w-4xl">
+            <ResourceLinks />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 px-4 md:px-6 lg:px-8">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Welcome back! Here&apos;s an overview of your billing analytics.
-        </p>
+    <div className="space-y-6">
+      {/* Onboarding Progress Banner - Only on Dashboard */}
+      <OnboardingProgress />
+
+      <div className="px-4 md:px-6 lg:px-8">
+        {/* Page Title */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            {salesDemoMode
+              ? 'Sales Demo View - Showcasing 26x ROI and Elite Tier Performance'
+              : "Welcome back! Here's an overview of your billing analytics."}
+          </p>
         {/* WebSocket Connection Status */}
         {isConnected && (
           <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
@@ -268,9 +330,20 @@ export default function DashboardPage() {
             Live updates enabled
           </div>
         )}
+        {salesDemoMode && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-semibold">
+            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+            Sales Demo Mode Active - Using realistic demo data
+          </div>
+        )}
       </div>
 
-      {/* Metrics Grid */}
+      {/* Sales Demo Mode: ROI Hero Section */}
+      {salesDemoMode && (
+        <ROIHero demoMode={salesDemoMode} />
+      )}
+
+      {/* Regular Metrics Grid (shown in both modes) */}
       {statsError ? (
         <Card>
           <CardContent className="pt-6">
@@ -334,7 +407,15 @@ export default function DashboardPage() {
             <CardTitle>Recent Deployments</CardTitle>
           </CardHeader>
           <CardContent>
-            <EmptyState message="No deployments have been created yet." />
+            <div className="flex flex-col items-center justify-center p-8 space-y-4">
+              <Rocket className="h-12 w-12 text-muted-foreground" />
+              <div className="text-center space-y-2">
+                <p className="font-medium text-foreground">No deployments yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Create a service and deploy it to see your deployment history here.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -383,6 +464,64 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Sales Demo Mode: Business Value Components */}
+      {salesDemoMode && (
+        <>
+          {/* Row 1: Engineering Velocity + Cost Optimization */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <EngineeringVelocity demoMode={salesDemoMode} />
+            <CostOptimizationWins demoMode={salesDemoMode} />
+          </div>
+
+          {/* Row 2: Time Saved + Security Posture */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <TimeSaved demoMode={salesDemoMode} />
+            <SecurityPosture demoMode={salesDemoMode} />
+          </div>
+
+          {/* Row 3: Before/After Transformation (Full Width) */}
+          <BeforeAfterTransformation demoMode={salesDemoMode} />
+
+          {/* Row 4: Competitive Benchmarking (Full Width) */}
+          <CompetitiveBenchmarking demoMode={salesDemoMode} />
+
+          {/* CTA Section */}
+          <Card className="border-2 border-[#635BFF] bg-gradient-to-r from-[#635BFF]/5 to-purple-50">
+            <CardContent className="py-8">
+              <div className="text-center space-y-4">
+                <h3 className="text-2xl font-bold text-[#635BFF]">
+                  Ready to achieve these results?
+                </h3>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Join hundreds of engineering teams using DevControl to save money,
+                  ship faster, and reduce risk.
+                </p>
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <Button size="lg" className="bg-[#635BFF] hover:bg-[#4f46e5]">
+                    Start 14-Day Free Trial →
+                  </Button>
+                  <Button size="lg" variant="outline">
+                    Schedule Demo Call
+                  </Button>
+                </div>
+                <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground pt-2">
+                  <span className="flex items-center gap-1">
+                    ✅ No credit card required
+                  </span>
+                  <span className="flex items-center gap-1">
+                    ✅ Full feature access
+                  </span>
+                  <span className="flex items-center gap-1">
+                    ✅ Setup assistance included
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+      </div>
     </div>
   )
 }

@@ -70,12 +70,33 @@ app.use(helmet({
 // CORS middleware
 app.use(corsMiddleware);
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ✅ Stripe webhook endpoint needs RAW body (not parsed JSON)
+app.use(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' })
+);
 
-// Input sanitization (after body parser, prevents XSS)
-app.use(sanitizerMiddleware);
+// Body parsing middleware - skip webhook route to preserve raw body
+app.use((req, res, next) => {
+  if (req.path === '/api/stripe/webhook') {
+    return next();
+  }
+  express.json()(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path === '/api/stripe/webhook') {
+    return next();
+  }
+  express.urlencoded({ extended: true })(req, res, next);
+});
+
+// Input sanitization (after body parser, prevents XSS) - skip webhook route
+app.use((req, res, next) => {
+  if (req.path === '/api/stripe/webhook') {
+    return next();
+  }
+  sanitizerMiddleware(req, res, next);
+});
 
 // Logging middleware
 if (NODE_ENV === 'development') {

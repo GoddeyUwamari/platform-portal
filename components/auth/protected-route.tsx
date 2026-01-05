@@ -79,7 +79,7 @@ export function ProtectedRoute({
             <h1 className="mb-2 text-4xl font-bold">403</h1>
             <h2 className="mb-4 text-2xl font-semibold">Access Denied</h2>
             <p className="mb-6 text-muted-foreground">
-              You don't have permission to access this page. Required role:{" "}
+              You don&apos;t have permission to access this page. Required role:{" "}
               {requiredRole}
             </p>
             <button

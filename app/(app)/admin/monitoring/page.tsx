@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Activity, CheckCircle2, XCircle, TrendingUp, DollarSign, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,7 @@ export default function MonitoringPage() {
     { name: 'Node Exporter', status: 'down', uptime: '--', latency: '--' },
   ])
 
-  const queryPrometheus = async (query: string): Promise<any> => {
+  const queryPrometheus = async (query: string): Promise<{result?: Array<{value?: [number, string]}>} | null> => {
     try {
       const response = await fetch(
         `http://localhost:9090/api/v1/query?query=${encodeURIComponent(query)}`
@@ -43,7 +43,7 @@ export default function MonitoringPage() {
     }
   }
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -117,13 +117,13 @@ export default function MonitoringPage() {
       console.error('Error fetching metrics:', error)
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchMetrics()
     const interval = setInterval(fetchMetrics, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [fetchMetrics])
 
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">

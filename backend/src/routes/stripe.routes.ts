@@ -2,14 +2,21 @@
  * Stripe Routes
  * Handles Stripe payment and subscription endpoints
  */
-
 import { Router } from 'express';
+import express from 'express'; // ✅ ADD THIS
 import { stripeController } from '../controllers/stripe.controller';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// All Stripe routes require authentication (except webhook)
+// Webhook route MUST come FIRST and use raw body
+router.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }), // ✅ RAW BODY FOR STRIPE
+  stripeController.handleWebhook.bind(stripeController)
+);
+
+// All other Stripe routes require authentication
 router.post(
   '/create-checkout-session',
   authenticate,
@@ -45,8 +52,5 @@ router.get(
   authenticate,
   stripeController.getInvoices.bind(stripeController)
 );
-
-// Webhook endpoint (no authentication - Stripe signature verification instead)
-router.post('/webhook', stripeController.handleWebhook.bind(stripeController));
 
 export default router;

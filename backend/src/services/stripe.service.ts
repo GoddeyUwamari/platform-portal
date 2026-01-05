@@ -314,6 +314,8 @@ export class StripeService {
     }
   ): Promise<void> {
     try {
+      console.log(`📝 Updating organization ${organizationId} with data:`, JSON.stringify(data, null, 2));
+
       const updates: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
@@ -349,6 +351,7 @@ export class StripeService {
       }
 
       if (updates.length === 0) {
+        console.log('⚠️ No updates to perform');
         return;
       }
 
@@ -361,10 +364,14 @@ export class StripeService {
         WHERE id = $${paramIndex}
       `;
 
-      await pool.query(query, values);
-      console.log(`Updated organization ${organizationId} subscription info`);
+      console.log(`🔍 SQL Query: ${query}`);
+      console.log(`🔍 Values: ${JSON.stringify(values)}`);
+
+      const result = await pool.query(query, values);
+      console.log(`✅ Database update result: ${result.rowCount} row(s) affected`);
+      console.log(`✅ Updated organization ${organizationId} subscription info`);
     } catch (error) {
-      console.error('Error updating organization subscription:', error);
+      console.error('❌ Error updating organization subscription:', error);
       throw error;
     }
   }
