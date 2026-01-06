@@ -16,7 +16,7 @@ export class DependenciesRepository {
    * Get all dependencies with optional filters
    * Joins with services table to get service names and status
    */
-  async findAll(filters?: DependencyFilters): Promise<ServiceDependency[]> {
+  async findAll(organizationId: string, filters?: DependencyFilters): Promise<ServiceDependency[]> {
     let query = `
       SELECT
         sd.*,
@@ -27,11 +27,11 @@ export class DependenciesRepository {
       FROM service_dependencies sd
       LEFT JOIN services ss ON sd.source_service_id = ss.id
       LEFT JOIN services ts ON sd.target_service_id = ts.id
-      WHERE 1=1
+      WHERE sd.organization_id = $1
     `;
 
-    const params: any[] = [];
-    let paramCount = 0;
+    const params: any[] = [organizationId];
+    let paramCount = 1;
 
     if (filters?.source_service_id) {
       paramCount++;
@@ -60,7 +60,7 @@ export class DependenciesRepository {
     query += ' ORDER BY sd.created_at DESC';
 
     const result = await pool.query(query, params);
-    return result.rows;
+    return result.rows || [];
   }
 
   /**
@@ -191,20 +191,20 @@ export class DependenciesRepository {
    * Get dependency graph (formatted for React Flow)
    * Auto-layout will be done client-side
    */
-  async getGraph(): Promise<DependencyGraph> {
-    // Get all services and dependencies
-    const servicesQuery = 'SELECT * FROM services ORDER BY name';
+  async getGraph(organizationId: string): Promise<DependencyGraph> {
+    // Get all services and dependencies for this organization
+    const servicesQuery = 'SELECT * FROM services WHERE organization_id = $1 ORDER BY name';
     const dependenciesQuery = `
-      SELECT * FROM service_dependencies
+      SELECT * FROM service_dependencies WHERE organization_id = $1
     `;
 
     const [servicesResult, depsResult] = await Promise.all([
-      pool.query(servicesQuery),
-      pool.query(dependenciesQuery),
+      pool.query(servicesQuery, [organizationId]),
+      pool.query(dependenciesQuery, [organizationId]),
     ]);
 
-    const services = servicesResult.rows;
-    const dependencies = depsResult.rows;
+    const services = servicesResult.rows || [];
+    const dependencies = depsResult.rows || [];
 
     // Create nodes (services)
     // Simple grid layout initially - React Flow with Dagre will re-layout client-side
@@ -310,8 +310,8 @@ export class DependenciesRepository {
    * Detect circular dependencies using DFS
    * Returns all cycles found in the dependency graph
    */
-  async detectCircularDependencies(): Promise<CircularDependency[]> {
-    // Get all dependencies
+  async detectCircularDependencies(organizationId: string): Promise<CircularDependency[]> {
+    // Get all dependencies for this organization
     const query = `
       SELECT
         sd.id,
@@ -322,10 +322,11 @@ export class DependenciesRepository {
       FROM service_dependencies sd
       JOIN services ss ON sd.source_service_id = ss.id
       JOIN services ts ON sd.target_service_id = ts.id
+      WHERE sd.organization_id = $1
     `;
 
-    const result = await pool.query(query);
-    const dependencies = result.rows;
+    const result = await pool.query(query, [organizationId]);
+    const dependencies = result.rows || [];
 
     // Build adjacency list
     const graph: Map<string, string[]> = new Map();

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Activity, CheckCircle2, XCircle, TrendingUp, DollarSign, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 
 interface ServiceHealth {
   name: string
@@ -127,13 +126,6 @@ export default function MonitoringPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Monitoring' }
-        ]}
-      />
-
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Activity className="h-8 w-8" />

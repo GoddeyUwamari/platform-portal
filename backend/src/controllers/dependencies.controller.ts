@@ -17,6 +17,16 @@ export class DependenciesController {
    */
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const organizationId = (req as any).user?.organizationId;
+
+      if (!organizationId) {
+        res.status(401).json({
+          success: false,
+          error: 'Organization ID not found',
+        });
+        return;
+      }
+
       const filters: DependencyFilters = {
         source_service_id: req.query.source_service_id as string,
         target_service_id: req.query.target_service_id as string,
@@ -24,12 +34,12 @@ export class DependenciesController {
         is_critical: req.query.is_critical === 'true' ? true : undefined,
       };
 
-      const dependencies = await repository.findAll(filters);
+      const dependencies = await repository.findAll(organizationId, filters);
 
       const response: ApiResponse = {
         success: true,
-        data: dependencies,
-        total: dependencies.length,
+        data: dependencies || [],
+        total: dependencies?.length || 0,
       };
 
       res.json(response);
@@ -38,6 +48,7 @@ export class DependenciesController {
       res.status(500).json({
         success: false,
         error: 'Failed to fetch dependencies',
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -223,11 +234,21 @@ export class DependenciesController {
    */
   async getGraph(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const graph = await repository.getGraph();
+      const organizationId = (req as any).user?.organizationId;
+
+      if (!organizationId) {
+        res.status(401).json({
+          success: false,
+          error: 'Organization ID not found',
+        });
+        return;
+      }
+
+      const graph = await repository.getGraph(organizationId);
 
       const response: ApiResponse = {
         success: true,
-        data: graph,
+        data: graph || { nodes: [], edges: [] },
       };
 
       res.json(response);
@@ -236,6 +257,7 @@ export class DependenciesController {
       res.status(500).json({
         success: false,
         error: 'Failed to fetch dependency graph',
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -285,12 +307,22 @@ export class DependenciesController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const cycles = await repository.detectCircularDependencies();
+      const organizationId = (req as any).user?.organizationId;
+
+      if (!organizationId) {
+        res.status(401).json({
+          success: false,
+          error: 'Organization ID not found',
+        });
+        return;
+      }
+
+      const cycles = await repository.detectCircularDependencies(organizationId);
 
       const response: ApiResponse = {
         success: true,
-        data: cycles,
-        message: cycles.length > 0
+        data: cycles || [],
+        message: cycles && cycles.length > 0
           ? `Found ${cycles.length} circular dependency cycle(s)`
           : 'No circular dependencies detected',
       };
@@ -301,6 +333,7 @@ export class DependenciesController {
       res.status(500).json({
         success: false,
         error: 'Failed to detect circular dependencies',
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }

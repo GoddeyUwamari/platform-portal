@@ -7,7 +7,6 @@ import { Plus, AlertCircle, Github } from 'lucide-react'
 import { useDemoMode } from '@/components/demo/demo-mode-toggle'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import {
   Table,
   TableBody,
@@ -134,13 +133,6 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-8 px-4 md:px-6 lg:px-8">
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Services', current: true },
-        ]}
-      />
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Service Catalog</h1>

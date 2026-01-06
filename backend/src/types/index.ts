@@ -315,3 +315,14 @@ export interface CircularDependency {
   dependency_ids: string[];
   severity: string;
 }
+
+// Deployment extended properties
+export interface DeploymentExtended extends Deployment {
+  organization_id: string;
+  service_name?: string;
+}
+
+// Service extended properties
+export interface ServiceExtended extends Service {
+  organization_id: string;
+}

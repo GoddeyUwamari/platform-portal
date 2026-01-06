@@ -6,8 +6,13 @@ import { Network, List, Activity, AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import { dependenciesService } from '@/lib/services/dependencies.service'
+import { servicesService } from '@/lib/services/services.service'
+import { DependencySetupSteps } from '@/components/dependencies/DependencySetupSteps'
+import { DependencyGraphPreview } from '@/components/dependencies/DependencyGraphPreview'
+import { DependencyBenefits } from '@/components/dependencies/DependencyBenefits'
+import { DependencyIntegrations } from '@/components/dependencies/DependencyIntegrations'
+import { DependencyUseCases } from '@/components/dependencies/DependencyUseCases'
 import dynamic from 'next/dynamic'
 
 // Dynamically import React Flow component to avoid SSR issues
@@ -46,6 +51,12 @@ export default function DependenciesPage() {
     queryFn: () => dependenciesService.getAll(),
   })
 
+  // Fetch services to check if user has any
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: () => servicesService.getAll(),
+  })
+
   // Fetch circular dependencies
   const {
     data: cycles = [],
@@ -67,16 +78,63 @@ export default function DependenciesPage() {
     },
   }
 
+  const hasDependencies = dependencies.length > 0
+  const hasServices = services.length > 0
+
+  // Empty State
+  if (!isLoading && !hasDependencies) {
+    return (
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Service Dependencies</h1>
+              <p className="text-muted-foreground mt-1">
+                Visualize and manage service dependency relationships
+              </p>
+            </div>
+            {hasServices && (
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Dependency
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Setup Steps */}
+        <DependencySetupSteps hasServices={hasServices} />
+
+        {/* Graph Preview */}
+        <DependencyGraphPreview />
+
+        {/* Value Proposition */}
+        <DependencyBenefits />
+
+        {/* Integration Options */}
+        <DependencyIntegrations />
+
+        {/* Use Cases */}
+        <DependencyUseCases />
+
+        {/* Add Dependency Dialog */}
+        {hasServices && (
+          <AddDependencyDialog
+            open={isAddDialogOpen}
+            onClose={() => setIsAddDialogOpen(false)}
+            onSuccess={() => {
+              refetch()
+              refetchCycles()
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 p-6">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Dependencies', current: true },
-        ]}
-      />
-
       {/* Header */}
       <div>
         <div className="flex items-center justify-between">

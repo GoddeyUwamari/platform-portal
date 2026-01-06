@@ -60,7 +60,7 @@ export class ServicesController {
       const user = (req as any).user;
       if (user && service) {
         emitOnboardingEvent('service:created', {
-          organizationId: user.organizationId || service.organization_id,
+          organizationId: user.organizationId,
           userId: user.userId || user.id,
           serviceId: service.id,
         });

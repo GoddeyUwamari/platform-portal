@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import {
   Table,
   TableBody,
@@ -28,6 +27,15 @@ import { Button } from '@/components/ui/button'
 import { infrastructureService } from '@/lib/services/infrastructure.service'
 import { costRecommendationsService } from '@/lib/services/cost-recommendations.service'
 import type { InfrastructureResource, ResourceType, ResourceStatus } from '@/lib/types'
+import { InfrastructureStatsPreview } from '@/components/infrastructure/InfrastructureStatsPreview'
+import { InfrastructureSetupSteps } from '@/components/infrastructure/InfrastructureSetupSteps'
+import { InfrastructurePreview } from '@/components/infrastructure/InfrastructurePreview'
+import { InfrastructureValueProps } from '@/components/infrastructure/InfrastructureValueProps'
+import { InfrastructureIntegrationOptions } from '@/components/infrastructure/InfrastructureIntegrationOptions'
+import { CostOptimizationPreview } from '@/components/infrastructure/CostOptimizationPreview'
+import { ResourceTypePreview } from '@/components/infrastructure/ResourceTypePreview'
+import { InfrastructureUseCases } from '@/components/infrastructure/InfrastructureUseCases'
+import { InfrastructureFAQ } from '@/components/infrastructure/InfrastructureFAQ'
 
 type ResourceFilter = 'all' | ResourceType
 
@@ -89,13 +97,50 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center p-12 space-y-4 border rounded-lg">
-      <Server className="h-12 w-12 text-muted-foreground" />
-      <div className="text-center">
-        <h3 className="text-lg font-semibold">No infrastructure resources found</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          AWS resources will appear here when services are deployed
+    <div className="space-y-10">
+      {/* Section 1: Stats Preview */}
+      <InfrastructureStatsPreview />
+
+      {/* Section 2: Setup Steps */}
+      <InfrastructureSetupSteps />
+
+      {/* Section 3: Dashboard Preview */}
+      <InfrastructurePreview />
+
+      {/* Section 4: Value Props */}
+      <InfrastructureValueProps />
+
+      {/* Section 5: Integration Options */}
+      <InfrastructureIntegrationOptions />
+
+      {/* Section 6: Cost Optimization */}
+      <CostOptimizationPreview />
+
+      {/* Section 7: Resource Types */}
+      <ResourceTypePreview />
+
+      {/* Section 8: Use Cases */}
+      <InfrastructureUseCases />
+
+      {/* Section 9: FAQ */}
+      <InfrastructureFAQ />
+
+      {/* Section 10: CTA Footer */}
+      <div className="bg-blue-50 rounded-lg border border-blue-200 p-8 text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Ready to optimize your AWS costs?
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Connect your AWS account in 3 minutes and start saving
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+            Connect AWS Account →
+          </button>
+          <button className="px-8 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">
+            View Documentation
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -202,13 +247,6 @@ export default function InfrastructurePage() {
 
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Infrastructure', current: true },
-        ]}
-      />
-
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Infrastructure Resources</h1>

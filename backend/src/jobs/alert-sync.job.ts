@@ -4,7 +4,7 @@ import { AlertHistoryService } from '../services/alert-history.service';
 
 export class AlertSyncJob {
   private service: AlertHistoryService;
-  private task: cron.ScheduledTask | null = null;
+ private task: ReturnType<typeof cron.schedule> | null = null;
 
   constructor(pool: Pool, prometheusUrl?: string) {
     this.service = new AlertHistoryService(pool, prometheusUrl);

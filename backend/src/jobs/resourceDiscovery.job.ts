@@ -8,7 +8,7 @@ import { AWSResourceDiscoveryService } from '../services/awsResourceDiscovery';
  */
 export class ResourceDiscoveryJob {
   private service: AWSResourceDiscoveryService;
-  private task: cron.ScheduledTask | null = null;
+ private task: ReturnType<typeof cron.schedule> | null = null;
 
   constructor(private pool: Pool) {
     this.service = new AWSResourceDiscoveryService(pool);

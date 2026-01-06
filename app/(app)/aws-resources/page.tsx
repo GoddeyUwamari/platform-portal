@@ -33,7 +33,6 @@ import { AssignToTeamDialog } from '@/components/aws-resources/AssignToTeamDialo
 import { AssignToServiceDialog } from '@/components/aws-resources/AssignToServiceDialog';
 import { SetEnvironmentDialog } from '@/components/aws-resources/SetEnvironmentDialog';
 import { CriticalIssuesBanner } from '@/components/aws-resources/CriticalIssuesBanner';
-import { Breadcrumb } from '@/components/navigation/breadcrumb';
 import { calculateRiskScore, calculateDaysExposed, calculateResourceRisk } from '@/lib/utils/riskScoring';
 
 export default function AWSResourcesPage() {
@@ -189,14 +188,6 @@ export default function AWSResourcesPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'AWS Resources', current: true },
-        ]}
-      />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

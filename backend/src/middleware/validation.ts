@@ -1,21 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
-import { z, ZodError } from 'zod';
-import { ValidationError } from '../utils/errors';
+import { ZodObject, ZodError } from 'zod';
 
-/**
- * Middleware to validate request body against a Zod schema
- */
-export const validateBody = (schema: z.ZodSchema) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export const validateBody = (schema: ZodObject<any>) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       req.body = await schema.parseAsync(req.body);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.errors
+        const errorMessage = error.issues
           .map((err) => `${err.path.join('.')}: ${err.message}`)
           .join(', ');
-        next(new ValidationError(errorMessage));
+        res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errorMessage,
+        });
       } else {
         next(error);
       }
@@ -23,20 +23,22 @@ export const validateBody = (schema: z.ZodSchema) => {
   };
 };
 
-/**
- * Middleware to validate query parameters against a Zod schema
- */
-export const validateQuery = (schema: z.ZodSchema) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export const validateQuery = (schema: ZodObject<any>) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.query = await schema.parseAsync(req.query);
+      const validated = await schema.parseAsync(req.query);
+      req.query = validated as any;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.errors
+        const errorMessage = error.issues
           .map((err) => `${err.path.join('.')}: ${err.message}`)
           .join(', ');
-        next(new ValidationError(errorMessage));
+        res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errorMessage,
+        });
       } else {
         next(error);
       }
@@ -44,20 +46,22 @@ export const validateQuery = (schema: z.ZodSchema) => {
   };
 };
 
-/**
- * Middleware to validate route parameters against a Zod schema
- */
-export const validateParams = (schema: z.ZodSchema) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export const validateParams = (schema: ZodObject<any>) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.params = await schema.parseAsync(req.params);
+      const validated = await schema.parseAsync(req.params);
+      req.params = validated as any;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.errors
+        const errorMessage = error.issues
           .map((err) => `${err.path.join('.')}: ${err.message}`)
           .join(', ');
-        next(new ValidationError(errorMessage));
+        res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errorMessage,
+        });
       } else {
         next(error);
       }

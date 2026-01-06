@@ -1,18 +1,10 @@
 'use client'
 
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import { EmptyState } from '@/components/onboarding/empty-state'
 
 export default function TeamsPage() {
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8">
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Teams' }
-        ]}
-      />
-
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Teams</h1>
         <p className="text-muted-foreground mt-2">

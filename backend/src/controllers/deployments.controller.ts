@@ -88,7 +88,7 @@ export class DeploymentsController {
       const user = (req as any).user;
       if (user && deployment) {
         emitOnboardingEvent('deployment:created', {
-          organizationId: user.organizationId || deployment.organization_id,
+          organizationId: user.organizationId,
           userId: user.userId || user.id,
           deploymentId: deployment.id,
         });
@@ -103,7 +103,7 @@ export class DeploymentsController {
 
           deploymentEvents.deploymentStarted(organizationId, {
             id: deployment.id,
-            service_name: deployment.service_name || 'Unknown Service',
+            service_name: 'Unknown Service',
             environment: deployment.environment,
             deployed_by: deployment.deployed_by,
           });

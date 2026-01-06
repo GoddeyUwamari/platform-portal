@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Rocket, AlertCircle, FileText } from 'lucide-react'
-import { EmptyState } from '@/components/onboarding/empty-state'
+import { AlertCircle, FileText } from 'lucide-react'
 import { useDemoMode } from '@/components/demo/demo-mode-toggle'
+import { DeploymentIntegrations } from '@/components/deployments/DeploymentIntegrations'
+import { DeploymentTimelinePreview } from '@/components/deployments/DeploymentTimelinePreview'
+import { DORAMetricsPreview } from '@/components/deployments/DORAMetricsPreview'
+import { DeploymentSetupChecklist } from '@/components/deployments/DeploymentSetupChecklist'
+import { DeploymentBenefits } from '@/components/deployments/DeploymentBenefits'
+import { DeploymentAPIExample } from '@/components/deployments/DeploymentAPIExample'
 import { Badge } from '@/components/ui/badge'
-import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import Link from 'next/link'
 import {
   Table,
@@ -178,13 +182,6 @@ export default function DeploymentsPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Deployments', current: true },
-        ]}
-      />
-
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Deployment History</h1>
@@ -220,23 +217,74 @@ export default function DeploymentsPage() {
           onRetry={() => refetch()}
         />
       ) : (demoMode || deployments.length === 0) ? (
-        <EmptyState
-          icon="🚀"
-          headline="Your deployment history lives here"
-          description="Every push to production, staging, and dev — tracked automatically. See what shipped, when, and by whom. Create a service first, then log your first deployment."
-          tip="Once you have deployments, you'll unlock DORA metrics and performance benchmarks."
-          primaryCTA={{
-            label: 'Go to Services',
-            action: 'route',
-            route: '/services',
-          }}
-          secondaryCTA={{
-            label: 'Learn About Deployments',
-            action: 'external',
-            href: 'https://docs.example.com/deployments',
-          }}
-          onboardingStep="log_deployment"
-        />
+        <div className="space-y-12">
+          {/* Section 1: Quick Start */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Track Your First Deployment
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Connect your CI/CD pipeline or use our API
+              </p>
+            </div>
+            <DeploymentIntegrations />
+          </section>
+
+          {/* Section 2: Timeline Preview */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Preview: Deployment Timeline
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Here's what your deployment feed will look like
+              </p>
+            </div>
+            <DeploymentTimelinePreview />
+          </section>
+
+          {/* Section 3: DORA Metrics */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Unlock DORA Metrics
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Measure and improve your engineering velocity
+              </p>
+            </div>
+            <DORAMetricsPreview />
+          </section>
+
+          {/* Section 4: Setup Checklist */}
+          <section>
+            <DeploymentSetupChecklist />
+          </section>
+
+          {/* Section 5: Benefits */}
+          <section>
+            <DeploymentBenefits />
+          </section>
+
+          {/* Section 6: API Example */}
+          <section>
+            <DeploymentAPIExample />
+          </section>
+
+          {/* Tip */}
+          <section className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex gap-3">
+              <div className="text-2xl">💡</div>
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">Pro Tip</h3>
+                <p className="text-sm text-blue-800">
+                  Once you have deployments, you'll unlock DORA metrics and performance benchmarks to compare your team against industry standards.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
       ) : (
         <div className="border rounded-lg">
           <Table>
