@@ -6,80 +6,153 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, Shield, Activity, TrendingUp } from 'lucide-react';
+import {
+  DollarSign,
+  Shield,
+  Activity,
+  TrendingUp,
+  Search,
+  Users,
+  ArrowRight,
+  Sparkles
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface ValueCard {
   icon: React.ReactNode;
   title: string;
   description: string;
+  features: string[];
   metric: string;
   bgColor: string;
+  borderColor: string;
 }
 
 const valueCards: ValueCard[] = [
   {
     icon: <DollarSign className="h-10 w-10" />,
-    title: 'Reduce AWS Costs',
-    description: 'Identify waste and optimize spending',
-    metric: 'Average savings: $1,200/month',
+    title: 'Cost Optimization',
+    description: 'Identify waste, rightsize resources, and reduce spending automatically with AI-powered recommendations',
+    features: ['Unused resource detection', 'Rightsizing recommendations', 'Cost anomaly alerts'],
+    metric: 'Avg savings: $18K/year',
     bgColor: 'bg-green-100 text-green-700',
+    borderColor: 'border-green-200',
   },
   {
     icon: <Shield className="h-10 w-10" />,
-    title: 'Stay Secure',
-    description: 'Real-time security risk detection',
+    title: 'Security Scanning',
+    description: 'Real-time security posture monitoring with automated compliance checks and vulnerability detection',
+    features: ['Compliance tracking', 'Vulnerability scanning', 'Access control audits'],
     metric: '100,000+ resources scanned',
     bgColor: 'bg-blue-100 text-blue-700',
+    borderColor: 'border-blue-200',
+  },
+  {
+    icon: <Search className="h-10 w-10" />,
+    title: 'Resource Discovery',
+    description: 'Automatically discover and catalog all your AWS resources across regions and accounts',
+    features: ['Multi-region support', 'Auto-tagging', 'Resource relationships'],
+    metric: '500+ resource types',
+    bgColor: 'bg-purple-100 text-purple-700',
+    borderColor: 'border-purple-200',
   },
   {
     icon: <Activity className="h-10 w-10" />,
-    title: 'Track Everything',
-    description: 'Monitor all services and deployments',
-    metric: '500+ teams trust DevControl',
-    bgColor: 'bg-purple-100 text-purple-700',
+    title: 'Compliance Tracking',
+    description: 'Monitor compliance with industry standards and internal policies with automated reporting',
+    features: ['SOC 2 compliance', 'GDPR tracking', 'Custom policies'],
+    metric: '99.9% compliance rate',
+    bgColor: 'bg-orange-100 text-orange-700',
+    borderColor: 'border-orange-200',
+  },
+  {
+    icon: <Users className="h-10 w-10" />,
+    title: 'Team Collaboration',
+    description: 'Centralized dashboard for your entire engineering team with role-based access and permissions',
+    features: ['Role-based access', 'Team workspaces', 'Activity logging'],
+    metric: '500+ teams using',
+    bgColor: 'bg-indigo-100 text-indigo-700',
+    borderColor: 'border-indigo-200',
   },
   {
     icon: <TrendingUp className="h-10 w-10" />,
-    title: 'Measure Performance',
-    description: 'Automated DORA metrics tracking',
-    metric: 'Zero manual reporting',
-    bgColor: 'bg-orange-100 text-orange-700',
+    title: 'Custom Dashboards',
+    description: 'Create personalized views with widgets for metrics that matter most to your team',
+    features: ['Drag-and-drop builder', 'Custom widgets', 'Export & sharing'],
+    metric: 'Unlimited dashboards',
+    bgColor: 'bg-pink-100 text-pink-700',
+    borderColor: 'border-pink-200',
   },
 ];
 
 export function ValuePropCards() {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {valueCards.map((card, index) => (
-        <Card
-          key={index}
-          className="group border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover:border-[#635BFF]/30 animate-in fade-in slide-in-from-bottom-4"
-          style={{ animationDelay: `${index * 100}ms`, animationDuration: '600ms' }}
-        >
-          <CardContent className="p-6">
-            {/* Icon */}
-            <div className={`mb-4 inline-flex rounded-lg p-3 transition-transform duration-300 group-hover:scale-110 ${card.bgColor}`}>
-              {card.icon}
-            </div>
+    <div className="py-8">
+      {/* Section Header */}
+      <div className="mb-12 text-center">
+        <Badge className="mb-4 bg-[#635BFF]/10 text-[#635BFF] border-[#635BFF]/20 hover:bg-[#635BFF]/20">
+          <Sparkles className="h-3 w-3 mr-1" />
+          Key Features
+        </Badge>
+        <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
+          Built for Modern Platform Teams
+        </h2>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          Everything you need to manage, optimize, and secure your AWS infrastructure
+        </p>
+      </div>
 
-            {/* Title */}
-            <h3 className="mb-2 text-lg font-bold text-gray-900">
-              {card.title}
-            </h3>
+      {/* Feature Grid - 3x2 layout */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {valueCards.map((card, index) => (
+          <Card
+            key={index}
+            className={`group border-2 ${card.borderColor} transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#635BFF] animate-in fade-in slide-in-from-bottom-4`}
+            style={{ animationDelay: `${index * 100}ms`, animationDuration: '600ms' }}
+          >
+            <CardContent className="p-6">
+              {/* Icon */}
+              <div className={`mb-5 inline-flex rounded-xl p-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 ${card.bgColor}`}>
+                {card.icon}
+              </div>
 
-            {/* Description */}
-            <p className="mb-3 text-sm text-gray-600">
-              {card.description}
-            </p>
+              {/* Title */}
+              <h3 className="mb-3 text-xl font-bold text-gray-900">
+                {card.title}
+              </h3>
 
-            {/* Metric */}
-            <p className="text-sm font-semibold text-[#635BFF]">
-              {card.metric}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+              {/* Description */}
+              <p className="mb-4 text-sm leading-relaxed text-gray-600">
+                {card.description}
+              </p>
+
+              {/* Features list */}
+              <ul className="mb-4 space-y-2">
+                {card.features.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                    <ArrowRight className="h-3 w-3 mt-0.5 text-[#635BFF] flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Metric */}
+              <div className="pt-4 border-t border-gray-100">
+                <p className="text-sm font-semibold text-[#635BFF]">
+                  {card.metric}
+                </p>
+              </div>
+
+              {/* Learn more link */}
+              <button className="mt-4 text-sm font-medium text-[#635BFF] hover:text-[#4f46e5] flex items-center gap-1 group-hover:gap-2 transition-all">
+                Learn more
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

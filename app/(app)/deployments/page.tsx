@@ -217,14 +217,14 @@ export default function DeploymentsPage() {
           onRetry={() => refetch()}
         />
       ) : (demoMode || deployments.length === 0) ? (
-        <div className="space-y-12">
+        <div className="space-y-5">
           {/* Section 1: Quick Start */}
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+          <section className="space-y-3">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">
                 Track Your First Deployment
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 mt-1">
                 Connect your CI/CD pipeline or use our API
               </p>
             </div>
@@ -232,12 +232,12 @@ export default function DeploymentsPage() {
           </section>
 
           {/* Section 2: Timeline Preview */}
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+          <section className="space-y-3">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">
                 Preview: Deployment Timeline
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 mt-1">
                 Here's what your deployment feed will look like
               </p>
             </div>
@@ -245,12 +245,12 @@ export default function DeploymentsPage() {
           </section>
 
           {/* Section 3: DORA Metrics */}
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Unlock DORA Metrics
+          <section className="space-y-3">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">
+                📊 Unlock DORA Metrics
               </h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 mt-1">
                 Measure and improve your engineering velocity
               </p>
             </div>
@@ -273,7 +273,7 @@ export default function DeploymentsPage() {
           </section>
 
           {/* Tip */}
-          <section className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <section className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex gap-3">
               <div className="text-2xl">💡</div>
               <div>

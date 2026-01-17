@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign, Tags, TrendingUp, Download, Ticket, Zap, Lightbulb } from 'lucide-react';
+import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign, Tags, TrendingUp, Download, Ticket, Zap } from 'lucide-react';
 import { EmptyState } from '@/components/onboarding/empty-state';
-import { AWSResourcesEmptyState } from '@/components/aws-resources/AWSResourcesEmptyState';
 import { useDemoMode } from '@/components/demo/demo-mode-toggle';
 import { useSubscription } from '@/lib/hooks/useSubscription';
 import { UpgradePrompt } from '@/components/billing/upgrade-prompt';
@@ -234,86 +233,48 @@ export default function AWSResourcesPage() {
         />
       )}
 
-      {/* Stats Cards - Enhanced */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Resources Card */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Resources</CardTitle>
-            <div className="flex items-center gap-2">
-              {!statsLoading && stats && stats.total_resources > 0 && (
-                <div className="flex items-center gap-1 text-xs">
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                  <span className="text-green-600 font-medium">+2</span>
-                </div>
-              )}
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Database className="h-5 w-5 text-blue-600" />
-              </div>
-            </div>
+            <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-20" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.total_resources || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Across all regions
-                </p>
-                {stats && stats.total_resources > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Last updated: 2 min ago
-                  </p>
-                )}
-              </>
+              <div className="text-2xl font-bold">{stats?.total_resources || 0}</div>
             )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Across all regions
+            </p>
           </CardContent>
         </Card>
 
-        {/* Monthly Cost Card */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
-            <div className="flex items-center gap-2">
-              {!statsLoading && stats && stats.total_monthly_cost > 0 && (
-                <div className="text-xs">
-                  <span className="text-orange-600 font-medium">↗ +12%</span>
-                </div>
-              )}
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  ${(stats?.total_monthly_cost || 0).toFixed(2)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Estimated for current month
-                </p>
-                {stats && stats.total_monthly_cost > 0 && (
-                  <button className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                    View cost breakdown →
-                  </button>
-                )}
-              </>
+              <div className="text-2xl font-bold">
+                ${(stats?.total_monthly_cost || 0).toFixed(2)}
+              </div>
             )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Estimated monthly spend
+            </p>
           </CardContent>
         </Card>
 
-        {/* Compliance Issues Card */}
-        <Card className={`hover:shadow-md transition-shadow ${!subscription.canViewCompliance ? 'relative' : ''}`}>
+        <Card className={!subscription.canViewCompliance ? 'relative' : ''}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Compliance Issues</CardTitle>
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-purple-600" />
-            </div>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
@@ -335,9 +296,6 @@ export default function AWSResourcesPage() {
                 <div className="text-2xl font-bold">
                   {stats?.compliance_stats?.total_issues || 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stats?.compliance_stats?.total_issues > 0 ? 'Impacts 3 resources' : 'All resources compliant'}
-                </p>
                 <div className="flex gap-1 mt-2">
                   {stats?.compliance_stats && (
                     <>
@@ -354,30 +312,15 @@ export default function AWSResourcesPage() {
                     </>
                   )}
                 </div>
-                {stats?.compliance_stats?.total_issues > 0 && (
-                  <button className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                    Fix compliance issues →
-                  </button>
-                )}
               </>
             )}
           </CardContent>
         </Card>
 
-        {/* Security Risks Card */}
-        <Card className="hover:shadow-md transition-shadow">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Security Risks</CardTitle>
-            <div className="flex items-center gap-2">
-              {!statsLoading && stats && ((stats.unencrypted_count || 0) + (stats.public_count || 0)) > 0 && (
-                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                  HIGH
-                </span>
-              )}
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-            </div>
+            <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
@@ -390,16 +333,6 @@ export default function AWSResourcesPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {stats?.unencrypted_count || 0} unencrypted, {stats?.public_count || 0} public
                 </p>
-                {((stats?.unencrypted_count || 0) + (stats?.public_count || 0)) > 0 && (
-                  <>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Requires immediate attention
-                    </p>
-                    <button className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium">
-                      Review security risks →
-                    </button>
-                  </>
-                )}
               </>
             )}
           </CardContent>
@@ -518,75 +451,6 @@ export default function AWSResourcesPage() {
           requiredTier="pro"
           ctaText="Upgrade to See Details"
         />
-      )}
-
-      {/* Quick Insights Section - NEW */}
-      {resources.length > 0 && stats && !statsLoading && (
-        <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Lightbulb className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Quick Insights
-              </h3>
-            </div>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              View all insights →
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Cost Savings Opportunity */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Potential Savings
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                ${(stats.orphaned_savings || 127).toFixed(0)}/mo
-              </div>
-              <p className="text-xs text-gray-600">
-                {stats.orphaned_count || 2} idle resources detected
-              </p>
-            </div>
-
-            {/* Security Recommendation */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-orange-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Security Priority
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {stats.public_count || 0} issues
-              </div>
-              <p className="text-xs text-gray-600">
-                Public resources need review
-              </p>
-            </div>
-
-            {/* Resource Health */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Database className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Overall Health
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {stats.compliance_stats?.total_issues === 0 ? 'Excellent' : stats.compliance_stats?.total_issues < 5 ? 'Good' : 'Needs Attention'}
-              </div>
-              <p className="text-xs text-gray-600">
-                {stats.total_resources > 0 ? Math.round(((stats.total_resources - (stats.compliance_stats?.total_issues || 0)) / stats.total_resources) * 100) : 100}% resources compliant
-              </p>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Cost Attribution Dashboard (Pro+ Feature) */}
@@ -938,7 +802,23 @@ export default function AWSResourcesPage() {
               ))}
             </div>
           ) : (demoMode || resources.length === 0) ? (
-            <AWSResourcesEmptyState />
+            <EmptyState
+              icon="☁️"
+              headline="Discover what's running in your AWS account"
+              description="Auto-scan for EC2, RDS, S3, Lambda, and more. Get cost attribution, security checks, and compliance scanning in one click. Connect your AWS credentials to start discovering resources."
+              tip="Credentials encrypted with AES-256. Read-only access. No infrastructure changes."
+              primaryCTA={{
+                label: 'Connect AWS Account',
+                action: 'route',
+                route: '/settings/organization?tab=aws',
+              }}
+              secondaryCTA={{
+                label: 'See What We Discover',
+                action: 'external',
+                href: 'https://docs.example.com/aws-discovery',
+              }}
+              onboardingStep="connect_aws"
+            />
           ) : (
             <div className="overflow-x-auto rounded-md border">
               <Table>

@@ -15,10 +15,15 @@ import { SecurityPosture } from '@/components/dashboard/security-posture'
 import { BeforeAfterTransformation } from '@/components/dashboard/before-after-transformation'
 import { CompetitiveBenchmarking } from '@/components/dashboard/competitive-benchmarking'
 import { WelcomeHero } from '@/components/dashboard/WelcomeHero'
+import { TrustedByLogos } from '@/components/dashboard/TrustedByLogos'
+import { QuickWins } from '@/components/dashboard/QuickWins'
+import { PlatformPreview } from '@/components/dashboard/PlatformPreview'
 import { ValuePropCards } from '@/components/dashboard/ValuePropCards'
-import { QuickStartGuide } from '@/components/dashboard/QuickStartGuide'
+import { IntegrationShowcase } from '@/components/dashboard/IntegrationShowcase'
 import { Testimonials } from '@/components/dashboard/Testimonials'
-import { ResourceLinks } from '@/components/dashboard/ResourceLinks'
+import { TrustIndicators } from '@/components/dashboard/TrustIndicators'
+import { FAQ } from '@/components/dashboard/FAQ'
+import { FinalCTA } from '@/components/dashboard/FinalCTA'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -270,40 +275,67 @@ export default function DashboardPage() {
   // Show high-converting empty state for first-time users
   if (isCompletelyEmpty) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-        {/* Hero Section - Full width, centered content */}
-        <section className="px-4 py-16">
-          <div className="mx-auto max-w-4xl">
-            <WelcomeHero />
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        {/* 1. Hero Section - Clean, Weglot-inspired design */}
+        <section>
+          <WelcomeHero />
+        </section>
+
+        {/* 2. Social Proof - Trusted by logos */}
+        <section>
+          <TrustedByLogos />
+        </section>
+
+        {/* 3. Quick Wins - Immediate benefits */}
+        <section className="px-4 py-8 md:py-12 bg-white">
+          <div className="mx-auto max-w-7xl">
+            <QuickWins />
           </div>
         </section>
 
-        {/* Value Props - Full width container */}
-        <section className="px-4 py-12">
+        {/* 4. Platform Preview - Visual showcase */}
+        <section className="px-4">
+          <PlatformPreview />
+        </section>
+
+        {/* 5. Key Features Grid - Enhanced with details */}
+        <section className="px-4 py-8 md:py-12 bg-white">
           <div className="mx-auto max-w-7xl">
             <ValuePropCards />
           </div>
         </section>
 
-        {/* Quick Start - Light background */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-5xl">
-            <QuickStartGuide />
+        {/* 6. Integration Showcase */}
+        <section className="px-4">
+          <div className="mx-auto max-w-7xl">
+            <IntegrationShowcase />
           </div>
         </section>
 
-        {/* Social Proof */}
-        <section className="px-4 py-12">
-          <div className="mx-auto max-w-6xl">
+        {/* 7. Social Proof - Enhanced testimonials */}
+        <section className="px-4">
+          <div className="mx-auto max-w-7xl">
             <Testimonials />
           </div>
         </section>
 
-        {/* Resources */}
-        <section className="px-4 py-8">
-          <div className="mx-auto max-w-4xl">
-            <ResourceLinks />
+        {/* 8. Trust Indicators - Security & compliance */}
+        <section className="px-4">
+          <div className="mx-auto max-w-7xl">
+            <TrustIndicators />
           </div>
+        </section>
+
+        {/* 9. FAQ - Collapsible questions */}
+        <section className="px-4">
+          <div className="mx-auto max-w-7xl">
+            <FAQ />
+          </div>
+        </section>
+
+        {/* 10. Final CTA - Enhanced conversion section */}
+        <section>
+          <FinalCTA />
         </section>
       </div>
     );

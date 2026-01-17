@@ -54,6 +54,25 @@ export function InfrastructureStatsPreview() {
 
   return (
     <div>
+      {/* Preview Mode Banner */}
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="text-2xl">📊</div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-900 mb-1">
+              Preview Mode: Example Data Shown
+            </p>
+            <p className="text-sm text-gray-600">
+              Connect your AWS account to see your actual infrastructure and costs
+            </p>
+          </div>
+          <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 whitespace-nowrap">
+            Connect AWS →
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div

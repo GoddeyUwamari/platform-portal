@@ -1,18 +1,36 @@
-'use client'
+import type { Metadata } from 'next'
+import { MarketingNav } from '@/components/landing/MarketingNav'
+import { HeroSection } from '@/components/landing/HeroSection'
+import { FeatureShowcase } from '@/components/landing/FeatureShowcase'
+import { SocialProofSection } from '@/components/landing/SocialProofSection'
+import { CTASection } from '@/components/landing/CTASection'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+export const metadata: Metadata = {
+  title: 'DevControl - AWS Infrastructure Command Center',
+  description:
+    'Monitor services, track deployments, and optimize AWS costs in one beautiful dashboard. Built for platform engineering teams.',
+  openGraph: {
+    title: 'DevControl - AWS Infrastructure Command Center',
+    description:
+      'Monitor services, track deployments, and optimize AWS costs in one beautiful dashboard.',
+    type: 'website',
+  },
+}
 
+/**
+ * Public Landing Page
+ *
+ * Modern SaaS landing page with hero section, features, social proof, and CTAs.
+ * Optimized for conversion and built with performance in mind.
+ */
 export default function Home() {
-  const router = useRouter()
-
-  useEffect(() => {
-    router.push('/dashboard')
-  }, [router])
-
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-lg">Redirecting to dashboard...</p>
-    </div>
+    <main className="min-h-screen">
+      <MarketingNav />
+      <HeroSection />
+      <FeatureShowcase />
+      <SocialProofSection />
+      <CTASection />
+    </main>
   )
 }

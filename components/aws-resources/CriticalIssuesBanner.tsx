@@ -30,12 +30,16 @@ export function CriticalIssuesBanner({
 }: CriticalIssuesBannerProps) {
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Don't show if no critical issues
-  if ((criticalCount === 0 && highCount === 0 && publicCount === 0) || isDismissed) {
+  // Calculate total security issues
+  const totalSecurityIssues = publicCount + unencryptedCount;
+  const totalComplianceIssues = criticalCount + highCount;
+  const totalIssues = totalSecurityIssues + totalComplianceIssues;
+
+  // Don't show if no issues
+  if (totalIssues === 0 || isDismissed) {
     return null;
   }
 
-  const totalIssues = criticalCount + highCount;
   const hasCritical = criticalCount > 0;
 
   return (
@@ -57,30 +61,38 @@ export function CriticalIssuesBanner({
                 hasCritical ? 'text-red-900 dark:text-red-100' : 'text-orange-900 dark:text-orange-100'
               }`}
             >
-              {hasCritical ? '🚨 URGENT:' : '⚠️ WARNING:'} {totalIssues}{' '}
-              {hasCritical ? 'critical' : 'high-severity'} security{' '}
-              {totalIssues === 1 ? 'issue' : 'issues'} detected
+              {hasCritical ? '🚨 URGENT:' : '⚠️ WARNING:'} {totalIssues} Security{' '}
+              {totalIssues === 1 ? 'Issue' : 'Issues'} Detected
             </AlertDescription>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm">
+            <div className="space-y-1.5 text-sm">
               {publicCount > 0 && (
-                <div className="flex items-center gap-1.5 text-red-700 dark:text-red-300">
-                  <Eye className="h-4 w-4" />
-                  <span className="font-medium">{publicCount} public resources</span>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-red-600 min-w-[60px]">HIGH:</span>
+                  <div className="flex items-center gap-1.5 text-red-700 dark:text-red-300">
+                    <Eye className="h-4 w-4" />
+                    <span>{publicCount} public {publicCount === 1 ? 'resource' : 'resources'}</span>
+                  </div>
                 </div>
               )}
               {unencryptedCount > 0 && (
-                <div className="flex items-center gap-1.5 text-red-700 dark:text-red-300">
-                  <Lock className="h-4 w-4" />
-                  <span className="font-medium">{unencryptedCount} unencrypted</span>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-orange-600 min-w-[60px]">MEDIUM:</span>
+                  <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-300">
+                    <Lock className="h-4 w-4" />
+                    <span>{unencryptedCount} unencrypted {unencryptedCount === 1 ? 'resource' : 'resources'}</span>
+                  </div>
                 </div>
               )}
               {frameworksAtRisk.length > 0 && (
-                <div className="flex items-center gap-1.5 text-red-700 dark:text-red-300">
-                  <Shield className="h-4 w-4" />
-                  <span className="font-medium">
-                    {frameworksAtRisk.join(', ')} at risk
-                  </span>
+                <div className="flex items-start gap-2">
+                  <span className="font-semibold text-red-600 min-w-[60px]">CRITICAL:</span>
+                  <div className="flex items-center gap-1.5 text-red-700 dark:text-red-300">
+                    <Shield className="h-4 w-4" />
+                    <span>
+                      {frameworksAtRisk.join(', ')} compliance at risk
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

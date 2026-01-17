@@ -92,18 +92,18 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
   }
 
   return (
-    <div className="relative flex gap-4 pb-8 last:pb-0">
+    <div className="relative flex gap-3 pb-4 last:pb-0">
       {/* Timeline connector */}
       <div className="flex flex-col items-center">
-        <div className={`w-3 h-3 rounded-full ${statusDots[entry.status]} ring-4 ring-gray-50`} />
-        <div className="w-0.5 h-full bg-gray-200 mt-2" />
+        <div className={`w-2.5 h-2.5 rounded-full ${statusDots[entry.status]} ring-3 ring-gray-50`} />
+        <div className="w-0.5 h-full bg-gray-200 mt-1.5" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 border rounded-lg p-4 bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
-        <div className="flex items-start justify-between mb-3">
+      <div className="flex-1 border rounded-lg p-3 bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{entry.timestamp}</span>
+            <span className="text-xs text-gray-500">{entry.timestamp}</span>
             {statusIcons[entry.status]}
           </div>
           <Badge className={`${environmentBadges[entry.environment]} border text-xs`}>
@@ -111,10 +111,10 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
           </Badge>
         </div>
 
-        <div className="space-y-2">
-          <h4 className="font-semibold text-gray-900">{entry.service}</h4>
+        <div className="space-y-1.5">
+          <h4 className="font-semibold text-sm text-gray-900">{entry.service}</h4>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-3 text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <User className="h-3 w-3" />
               <span>{entry.deployedBy.name}</span>
@@ -125,18 +125,14 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-xs">
             <GitCommit className="h-3 w-3 text-gray-400" />
-            <code className="font-mono text-xs bg-white px-2 py-1 rounded border">
+            <code className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
               {entry.commit.hash}
             </code>
-            <span className="text-gray-600">{entry.commit.message}</span>
+            <span className="text-gray-600 truncate">{entry.commit.message}</span>
           </div>
         </div>
-
-        <Button variant="ghost" size="sm" className="mt-3 text-gray-400" disabled>
-          View Details →
-        </Button>
       </div>
     </div>
   )
@@ -144,24 +140,17 @@ function TimelineItem({ entry }: { entry: TimelineEntry }) {
 
 export function DeploymentTimelinePreview() {
   return (
-    <div className="relative">
-      {/* Example annotation */}
-      <div className="absolute -top-8 right-0 text-sm text-gray-500 italic">
-        Example: What your deployment feed will show
+    <div className="border rounded-lg p-4 bg-white opacity-75">
+      <div className="space-y-0">
+        {exampleDeployments.map((entry) => (
+          <TimelineItem key={entry.id} entry={entry} />
+        ))}
       </div>
 
-      <div className="border rounded-lg p-6 bg-white opacity-75">
-        <div className="space-y-0">
-          {exampleDeployments.map((entry) => (
-            <TimelineItem key={entry.id} entry={entry} />
-          ))}
-        </div>
-
-        <div className="text-center pt-4 border-t">
-          <p className="text-sm text-gray-500">
-            Connect your first deployment to start tracking
-          </p>
-        </div>
+      <div className="text-center pt-3 mt-2 border-t">
+        <p className="text-xs text-gray-500">
+          Connect your first deployment to start tracking
+        </p>
       </div>
     </div>
   )

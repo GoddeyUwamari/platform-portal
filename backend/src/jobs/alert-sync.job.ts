@@ -4,10 +4,12 @@ import { AlertHistoryService } from '../services/alert-history.service';
 
 export class AlertSyncJob {
   private service: AlertHistoryService;
- private task: ReturnType<typeof cron.schedule> | null = null;
+  private task: ReturnType<typeof cron.schedule> | null = null;
+  private prometheusUrl?: string;
 
   constructor(pool: Pool, prometheusUrl?: string) {
     this.service = new AlertHistoryService(pool, prometheusUrl);
+    this.prometheusUrl = prometheusUrl;
   }
 
   /**
@@ -15,6 +17,18 @@ export class AlertSyncJob {
    * Runs every minute to sync alerts from Prometheus
    */
   start(): void {
+    // 🔥 NEW: Check if Prometheus is configured
+    if (!this.prometheusUrl) {
+      console.log('⏭️  [Alert Sync Job] Skipped - Prometheus not configured');
+      return;
+    }
+
+    // 🔥 NEW: Only run in production (optional but recommended)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⏭️  [Alert Sync Job] Skipped - disabled in development mode');
+      return;
+    }
+
     if (this.task) {
       console.log('[Alert Sync Job] Already running');
       return;

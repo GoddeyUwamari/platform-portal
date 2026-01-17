@@ -73,74 +73,57 @@ function DORAMetricCard({ metric }: { metric: DORAMetric }) {
   }
 
   const tierLabels = {
-    elite: 'Elite Tier',
-    high: 'High Tier',
-    medium: 'Medium Tier',
-    low: 'Low Tier',
+    elite: 'Elite',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
   }
 
   return (
-    <div className="border rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-            {metric.icon}
-          </div>
-          <h3 className="font-semibold text-gray-900">{metric.name}</h3>
+    <div className="border rounded-lg p-4 bg-gradient-to-br from-gray-50 to-white hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+          {metric.icon}
         </div>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <Info className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-sm">{metric.description}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Badge className={`${tierColors[metric.tier]} border text-xs px-2 py-0.5`}>
+          {metric.tier === 'elite' && <Star className="h-3 w-3 mr-1 fill-current" />}
+          {tierLabels[metric.tier]}
+        </Badge>
       </div>
 
-      <div className="space-y-4">
-        {/* Example value */}
-        <div>
-          <div className="text-3xl font-bold text-gray-900 mb-2">
-            {metric.exampleValue}
-          </div>
-          <Badge className={`${tierColors[metric.tier]} border`}>
-            {metric.tier === 'elite' && <Star className="h-3 w-3 mr-1 fill-current" />}
-            {tierLabels[metric.tier]}
-          </Badge>
-        </div>
+      {/* Title */}
+      <h3 className="font-semibold text-sm mb-1">{metric.name}</h3>
 
-        {/* Percentile bar */}
-        <div className="space-y-2">
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                metric.tier === 'elite'
-                  ? 'bg-green-500'
-                  : metric.tier === 'high'
-                  ? 'bg-blue-500'
-                  : metric.tier === 'medium'
-                  ? 'bg-yellow-500'
-                  : 'bg-red-500'
-              }`}
-              style={{ width: `${metric.percentile}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500">
-            {metric.percentile}th percentile
-          </p>
-        </div>
+      {/* Example value */}
+      <div className="text-2xl font-bold text-gray-900 mb-2">
+        {metric.exampleValue}
+      </div>
 
-        {/* Unlock requirement */}
-        <div className="pt-3 border-t">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Lock className="h-4 w-4" />
-            <span>{metric.unlockRequirement}</span>
-          </div>
+      {/* Percentile bar */}
+      <div className="mb-3">
+        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${
+              metric.tier === 'elite'
+                ? 'bg-green-500'
+                : metric.tier === 'high'
+                ? 'bg-blue-500'
+                : metric.tier === 'medium'
+                ? 'bg-yellow-500'
+                : 'bg-red-500'
+            }`}
+            style={{ width: `${metric.percentile}%` }}
+          />
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          {metric.percentile}th percentile
+        </p>
+      </div>
+
+      {/* Unlock requirement */}
+      <div className="flex items-center gap-2 text-xs text-gray-600">
+        <Lock className="w-3 h-3" />
+        <span>{metric.unlockRequirement}</span>
       </div>
     </div>
   )
@@ -148,35 +131,34 @@ function DORAMetricCard({ metric }: { metric: DORAMetric }) {
 
 export function DORAMetricsPreview() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-600">
-            Track the four key metrics that predict software delivery performance
-          </p>
-        </div>
+        <p className="text-sm text-gray-600">
+          Track the four key metrics that predict software delivery performance
+        </p>
         <Link
           href="https://cloud.google.com/blog/products/devops-sre/using-the-four-keys-to-measure-your-devops-performance"
           target="_blank"
-          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 whitespace-nowrap"
         >
-          What are DORA metrics?
+          Learn more
           <Info className="h-3 w-3" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 2x2 Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {metrics.map((metric) => (
           <DORAMetricCard key={metric.id} metric={metric} />
         ))}
       </div>
 
-      <div className="text-center p-6 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
         <p className="text-sm text-blue-900">
           <strong>Elite performers</strong> deploy <strong>200x more frequently</strong> and have{' '}
           <strong>3x lower</strong> change failure rates than low performers
         </p>
-        <p className="text-xs text-blue-700 mt-2">
+        <p className="text-xs text-blue-700 mt-1">
           Source: DORA State of DevOps Report
         </p>
       </div>
