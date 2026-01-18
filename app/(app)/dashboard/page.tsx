@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, Layers, Rocket, DollarSign, AlertCircle, Server, Shield, Activity, Database } from 'lucide-react'
 import { OnboardingProgress } from '@/components/onboarding/progress-indicator'
 import { useOnboardingStage } from '@/lib/stores/onboarding-store'
 import { useDemoMode } from '@/components/demo/demo-mode-toggle'
@@ -22,6 +22,15 @@ import { IntegrationShowcase } from '@/components/dashboard/IntegrationShowcase'
 import { Testimonials } from '@/components/dashboard/Testimonials'
 import { TrustIndicators } from '@/components/dashboard/TrustIndicators'
 import { FinalCTA } from '@/components/dashboard/FinalCTA'
+import { HeroMetricCard } from '@/components/dashboard/hero-metric-card'
+import { CostTrendChart } from '@/components/dashboard/cost-trend-chart'
+import { QuickInsights, generateDemoInsights } from '@/components/dashboard/quick-insights'
+import { ActivityFeed, generateDemoActivities } from '@/components/dashboard/activity-feed'
+import { ServiceHealthGrid, generateDemoServices } from '@/components/dashboard/service-health-grid'
+import { DORAMetricsMini } from '@/components/dashboard/dora-metrics-mini'
+import { ResourceDistributionChart } from '@/components/dashboard/resource-distribution-chart'
+import { CostOptimizationCard, generateDemoCostOpportunities } from '@/components/dashboard/cost-optimization-card'
+import { QuickActions } from '@/components/dashboard/quick-actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -32,6 +41,8 @@ import { deploymentsService } from '@/lib/services/deployments.service'
 import type { PlatformDashboardStats, Deployment, DeploymentStatus } from '@/lib/types'
 import { useWebSocket } from '@/lib/hooks/useWebSocket'
 import { toast } from 'sonner'
+import { subDays, format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
 
 // Metric Card Component
@@ -145,12 +156,40 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 // Empty State Component (deprecated - now using onboarding EmptyState)
 
+// Helper function to generate demo cost trend data
+function generateCostTrendData(days: number) {
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = subDays(new Date(), i);
+    const compute = Math.random() * 300 + 200;
+    const storage = Math.random() * 150 + 100;
+    const database = Math.random() * 200 + 150;
+    const network = Math.random() * 80 + 50;
+    const other = Math.random() * 70 + 30;
+
+    data.push({
+      date: format(date, 'yyyy-MM-dd'),
+      compute,
+      storage,
+      database,
+      network,
+      other,
+      total: compute + storage + database + network + other,
+      forecast: i < -7, // Last 7 days are forecast
+    });
+  }
+  return data;
+}
+
 export default function DashboardPage() {
   const { socket, isConnected } = useWebSocket();
   const queryClient = useQueryClient();
   const demoMode = useDemoMode();
   const salesDemoMode = useSalesDemo((state) => state.enabled);
   const createServiceStage = useOnboardingStage('create_service');
+  const router = useRouter();
+  const [dismissedInsights, setDismissedInsights] = useState<string[]>([]);
+  const [costDateRange, setCostDateRange] = useState<'7d' | '30d' | '90d' | '6mo' | '1yr'>('90d');
 
   // Fetch platform dashboard stats
   const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<PlatformDashboardStats>({
@@ -167,8 +206,8 @@ export default function DashboardPage() {
     },
   });
 
-  // Check if it's a completely empty state (no services and step not completed) OR demo mode
-  const isCompletelyEmpty = demoMode || (
+  // Check if it's a completely empty state (no services and step not completed) - but NOT when demo mode is on
+  const isCompletelyEmpty = !demoMode && (
     !statsLoading &&
     (stats?.totalServices === 0 || !stats) &&
     (deployments.length === 0) &&
@@ -359,7 +398,41 @@ export default function DashboardPage() {
         <ROIHero demoMode={salesDemoMode} />
       )}
 
-      {/* Regular Metrics Grid (shown in both modes) */}
+      {/* Quick Actions Bar */}
+      {!statsError && (
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Last updated {new Date().toLocaleTimeString()}
+            </p>
+          </div>
+          <QuickActions
+            actions={[
+              {
+                id: 'add-service',
+                label: 'Add Service',
+                icon: Rocket,
+                onClick: () => router.push('/app/services/new'),
+                variant: 'primary',
+              },
+              {
+                id: 'scan-resources',
+                label: 'Scan AWS Resources',
+                icon: Server,
+                onClick: () => router.push('/app/infrastructure'),
+              },
+              {
+                id: 'configure-alerts',
+                label: 'Configure Alerts',
+                icon: AlertCircle,
+                onClick: () => router.push('/app/admin/alerts'),
+              },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Premium Hero Metrics Grid */}
       {statsError ? (
         <Card>
           <CardContent className="pt-6">
@@ -370,36 +443,134 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Total Services"
-            value={stats?.totalServices ?? 0}
-            change={stats?.servicesChange ?? 0}
-            icon={Layers}
-            loading={statsLoading}
-          />
-          <MetricCard
-            title="Active Deployments"
-            value={stats?.activeDeployments ?? 0}
-            change={stats?.deploymentsChange ?? 0}
-            icon={Rocket}
-            loading={statsLoading}
-          />
-          <MetricCard
-            title="Monthly AWS Cost"
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <HeroMetricCard
+            title="AWS Monthly Spend"
             value={stats ? formatCurrency(stats.monthlyAwsCost) : '$0.00'}
-            change={stats?.costChange ?? 0}
+            trend={{
+              value: Math.abs(stats?.costChange ?? 0),
+              direction: (stats?.costChange ?? 0) >= 0 ? 'up' : 'down',
+              label: 'vs last month',
+            }}
             icon={DollarSign}
             loading={statsLoading}
+            iconColor="text-green-600"
+            iconBgColor="bg-green-100"
+            status={{
+              label: stats?.monthlyAwsCost && stats.monthlyAwsCost < 1500 ? 'On budget' : 'Over budget',
+              variant: stats?.monthlyAwsCost && stats.monthlyAwsCost < 1500 ? 'success' : 'warning',
+            }}
+            trendInverted={true}
+            href="/app/infrastructure"
+            sparklineData={[800, 950, 1100, 1050, 1200, 1150, stats?.monthlyAwsCost ?? 1247]}
           />
-          <MetricCard
-            title="Teams"
-            value={stats?.totalTeams ?? 0}
-            change={stats?.teamsChange ?? 0}
-            icon={Users}
+          <HeroMetricCard
+            title="Active Services"
+            value={stats?.totalServices ?? 0}
+            trend={{
+              value: Math.abs(stats?.servicesChange ?? 0),
+              direction: (stats?.servicesChange ?? 0) >= 0 ? 'up' : 'down',
+              label: 'this week',
+            }}
+            icon={Layers}
             loading={statsLoading}
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-100"
+            status={{
+              label: `${stats?.activeDeployments ?? 0} healthy`,
+              variant: 'success',
+            }}
+            href="/app/services"
+          />
+          <HeroMetricCard
+            title="AWS Resources"
+            value={156}
+            trend={{
+              value: 5,
+              direction: 'up',
+              label: 'this month',
+            }}
+            icon={Server}
+            loading={statsLoading}
+            iconColor="text-purple-600"
+            iconBgColor="bg-purple-100"
+            href="/app/infrastructure"
+          />
+          <HeroMetricCard
+            title="Security Score"
+            value="87/100"
+            trend={{
+              value: 5,
+              direction: 'up',
+              label: 'this week',
+            }}
+            icon={Shield}
+            loading={statsLoading}
+            iconColor="text-teal-600"
+            iconBgColor="bg-teal-100"
+            status={{
+              label: '3 issues',
+              variant: 'warning',
+            }}
+            href="/app/compliance"
+          />
+          <HeroMetricCard
+            title="Active Alerts"
+            value={0}
+            trend={{
+              value: 100,
+              direction: 'down',
+              label: 'resolved',
+            }}
+            icon={AlertCircle}
+            loading={statsLoading}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+            status={{
+              label: 'All clear',
+              variant: 'success',
+            }}
+            href="/app/admin/alerts"
+          />
+          <HeroMetricCard
+            title="Deployments/Week"
+            value={stats?.activeDeployments ?? 12}
+            trend={{
+              value: 20,
+              direction: 'up',
+              label: 'vs last week',
+            }}
+            icon={Activity}
+            loading={statsLoading}
+            iconColor="text-orange-600"
+            iconBgColor="bg-orange-100"
+            status={{
+              label: '91.7% success',
+              variant: 'success',
+            }}
           />
         </div>
+      )}
+
+      {/* Cost Trend Chart */}
+      {!statsError && (
+        <CostTrendChart
+          data={generateCostTrendData(costDateRange === '7d' ? 7 : costDateRange === '30d' ? 30 : costDateRange === '90d' ? 90 : costDateRange === '6mo' ? 180 : 365)}
+          isLoading={statsLoading}
+          dateRange={costDateRange}
+          onDateRangeChange={setCostDateRange}
+          onExport={() => {
+            toast.success('Exporting cost data...');
+          }}
+        />
+      )}
+
+      {/* Quick Insights */}
+      {!statsError && (
+        <QuickInsights
+          insights={generateDemoInsights().filter(insight => !dismissedInsights.includes(insight.id))}
+          onDismiss={(id) => setDismissedInsights([...dismissedInsights, id])}
+        />
       )}
 
       {/* Recent Deployments Table */}
@@ -479,6 +650,67 @@ export default function DashboardPage() {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {/* Two Column Layout: Service Health + Activity Feed */}
+      {!statsError && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Service Health - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <ServiceHealthGrid
+              services={generateDemoServices()}
+              isLoading={statsLoading}
+              onServiceClick={(service) => {
+                toast.info(`Viewing details for ${service.name}`);
+              }}
+            />
+          </div>
+
+          {/* Activity Feed - Takes 1 column */}
+          <div className="lg:col-span-1">
+            <ActivityFeed
+              activities={generateDemoActivities()}
+              isLoading={statsLoading}
+              showFilter={true}
+              onActivityClick={(activity) => {
+                toast.info(`Viewing activity: ${activity.title}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* DORA Metrics */}
+      {!statsError && (
+        <DORAMetricsMini
+          isLoading={statsLoading}
+          onLearnMore={() => {
+            window.open('https://cloud.google.com/blog/products/devops-sre/using-the-four-keys-to-measure-your-devops-performance', '_blank');
+          }}
+          onViewDetails={() => {
+            router.push('/app/metrics/dora');
+          }}
+        />
+      )}
+
+      {/* Two Column Layout: Resource Distribution + Cost Optimization */}
+      {!statsError && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ResourceDistributionChart
+            isLoading={statsLoading}
+            onSegmentClick={(resource) => {
+              toast.info(`Viewing ${resource.name}`);
+            }}
+          />
+          <CostOptimizationCard
+            opportunities={generateDemoCostOpportunities()}
+            isLoading={statsLoading}
+            currentSpend={stats?.monthlyAwsCost ?? 1247}
+            onViewAll={() => {
+              router.push('/app/cost-optimization');
+            }}
+          />
+        </div>
       )}
 
       {/* Sales Demo Mode: Business Value Components */}
