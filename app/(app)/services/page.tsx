@@ -14,6 +14,7 @@ import {
   Download,
   Upload,
   GitBranch,
+  Activity,
 } from 'lucide-react';
 import { useDemoMode } from '@/components/demo/demo-mode-toggle';
 import { Button } from '@/components/ui/button';
@@ -162,6 +163,16 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-8 px-4 md:px-6 lg:px-8">
+      {/* Demo Mode Indicator */}
+      {demoMode && (
+        <div className="bg-purple-600 text-white px-4 py-3 rounded-lg text-center font-medium -mx-4 md:-mx-6 lg:-mx-8 -mt-8 mb-0">
+          <div className="flex items-center justify-center gap-2">
+            <Activity className="w-4 h-4 animate-pulse" />
+            <span>Demo Mode Active - Showing sample service catalog data</span>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">

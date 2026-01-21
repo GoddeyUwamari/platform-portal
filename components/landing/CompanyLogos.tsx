@@ -1,33 +1,40 @@
 'use client'
 
+import { Shield, Clock, CheckCircle2, Award } from 'lucide-react'
+
 /**
- * CompanyLogos Component
+ * CompanyLogos Component - UPDATED
  *
- * Displays a grid of company logos as social proof.
- * Uses placeholder colored boxes initially - replace with actual logos.
+ * Previously displayed fake company logos. Now shows trust indicators instead.
+ * NOTE: Add real customer logos only with written permission.
  */
 export function CompanyLogos() {
-  const companies = [
-    { name: 'TechCorp', color: 'bg-blue-500' },
-    { name: 'DataFlow', color: 'bg-green-500' },
-    { name: 'CloudScale', color: 'bg-purple-500' },
-    { name: 'DevOps Pro', color: 'bg-orange-500' },
-    { name: 'SecureNet', color: 'bg-indigo-500' },
+  const trustIndicators = [
+    { icon: Shield, label: 'Enterprise Security' },
+    { icon: Clock, label: '3-min Setup' },
+    { icon: CheckCircle2, label: 'Read-Only Access' },
+    { icon: Award, label: '99.9% Uptime' },
   ]
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-12 mb-20 opacity-60 hover:opacity-100 transition-all duration-300">
-      {companies.map((company, index) => (
-        <div
-          key={index}
-          className="h-8 w-32 rounded flex items-center justify-center text-white text-sm font-semibold transition-transform hover:scale-110"
-          style={{ backgroundColor: company.color.replace('bg-', '') }}
-        >
-          <div className={`h-8 w-32 ${company.color} rounded flex items-center justify-center`}>
-            {company.name}
-          </div>
-        </div>
-      ))}
+    <div className="mb-20">
+      <p className="text-center text-sm text-muted-foreground mb-6">
+        Trusted by engineering teams from startups to Fortune 500 companies
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-8">
+        {trustIndicators.map((item, index) => {
+          const Icon = item.icon
+          return (
+            <div
+              key={index}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-100"
+            >
+              <Icon className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

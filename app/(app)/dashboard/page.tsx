@@ -7,6 +7,9 @@ import { OnboardingProgress } from '@/components/onboarding/progress-indicator'
 import { useOnboardingStage } from '@/lib/stores/onboarding-store'
 import { useDemoMode } from '@/components/demo/demo-mode-toggle'
 import { useSalesDemo } from '@/lib/demo/sales-demo-data'
+import { LastSynced } from '@/components/ui/last-synced'
+import { SyncStatusBanner } from '@/components/ui/sync-status-banner'
+import { DEMO_LAST_SYNCED, DEMO_SYNC_STATUS } from '@/lib/demo/demo-timestamps'
 import { ROIHero } from '@/components/dashboard/roi-hero'
 import { EngineeringVelocity } from '@/components/dashboard/engineering-velocity'
 import { CostOptimizationWins } from '@/components/dashboard/cost-optimization-wins'
@@ -19,7 +22,8 @@ import { TrustedByLogos } from '@/components/dashboard/TrustedByLogos'
 import { QuickWins } from '@/components/dashboard/QuickWins'
 import { PlatformPreview } from '@/components/dashboard/PlatformPreview'
 import { IntegrationShowcase } from '@/components/dashboard/IntegrationShowcase'
-import { Testimonials } from '@/components/dashboard/Testimonials'
+// REMOVED: Fake testimonials - legal compliance
+// import { Testimonials } from '@/components/dashboard/Testimonials'
 import { TrustIndicators } from '@/components/dashboard/TrustIndicators'
 import { FinalCTA } from '@/components/dashboard/FinalCTA'
 import { HeroMetricCard } from '@/components/dashboard/hero-metric-card'
@@ -190,6 +194,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [dismissedInsights, setDismissedInsights] = useState<string[]>([]);
   const [costDateRange, setCostDateRange] = useState<'7d' | '30d' | '90d' | '6mo' | '1yr'>('90d');
+  const [lastSynced, setLastSynced] = useState<Date>(demoMode ? DEMO_LAST_SYNCED : new Date());
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'synced' | 'error'>(DEMO_SYNC_STATUS);
 
   // Fetch platform dashboard stats
   const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useQuery<PlatformDashboardStats>({
@@ -288,6 +294,18 @@ export default function DashboardPage() {
     };
   }, [socket, queryClient]);
 
+  // Handle manual refresh
+  const handleRefreshDashboard = async () => {
+    setSyncStatus('syncing');
+    try {
+      await Promise.all([refetchStats(), refetchDeployments()]);
+      setLastSynced(new Date());
+      setSyncStatus('synced');
+    } catch (error) {
+      setSyncStatus('error');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -342,12 +360,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* 6. Social Proof - Enhanced testimonials */}
-        <section className="px-4">
-          <div className="mx-auto max-w-7xl">
-            <Testimonials />
-          </div>
-        </section>
+        {/* REMOVED: 6. Social Proof - fake testimonials removed for legal compliance */}
 
         {/* 7. Trust Indicators - Security & compliance */}
         <section className="px-4">
@@ -369,29 +382,53 @@ export default function DashboardPage() {
       {/* Onboarding Progress Banner - Only on Dashboard */}
       <OnboardingProgress />
 
+      {/* Demo Mode Indicator */}
+      {demoMode && !salesDemoMode && (
+        <div className="bg-purple-600 text-white px-4 py-3 text-center font-medium">
+          <div className="flex items-center justify-center gap-2">
+            <Activity className="w-4 h-4 animate-pulse" />
+            <span>Demo Mode Active - Showing sample data for empty states</span>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 md:px-6 lg:px-8">
         {/* Page Title */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            {salesDemoMode
-              ? 'Sales Demo View - Showcasing 26x ROI and Elite Tier Performance'
-              : "Welcome back! Here's an overview of your billing analytics."}
-          </p>
-        {/* WebSocket Connection Status */}
-        {isConnected && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Live updates enabled
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              {salesDemoMode
+                ? 'Sales Demo View - Showcasing 26x ROI and Elite Tier Performance'
+                : "Welcome back! Here's an overview of your billing analytics."}
+            </p>
+            {/* WebSocket Connection Status */}
+            {isConnected && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Live updates enabled
+              </div>
+            )}
+            {salesDemoMode && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-semibold">
+                <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+                Sales Demo Mode Active - Using realistic demo data
+              </div>
+            )}
           </div>
-        )}
-        {salesDemoMode && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-purple-600 font-semibold">
-            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-            Sales Demo Mode Active - Using realistic demo data
-          </div>
-        )}
-      </div>
+          <LastSynced
+            timestamp={lastSynced}
+            onRefresh={handleRefreshDashboard}
+            autoRefresh={true}
+          />
+        </div>
+
+        {/* Sync Status Banner */}
+        <SyncStatusBanner
+          lastSynced={lastSynced}
+          status={syncStatus}
+          onRetry={handleRefreshDashboard}
+        />
 
       {/* Sales Demo Mode: ROI Hero Section */}
       {salesDemoMode && (
@@ -481,6 +518,7 @@ export default function DashboardPage() {
               variant: 'success',
             }}
             href="/app/services"
+            sparklineData={[4, 5, 4, 6, 5, 7, stats?.totalServices ?? 8]}
           />
           <HeroMetricCard
             title="AWS Resources"
@@ -495,6 +533,7 @@ export default function DashboardPage() {
             iconColor="text-purple-600"
             iconBgColor="bg-purple-100"
             href="/app/infrastructure"
+            sparklineData={[142, 145, 148, 151, 149, 152, 156]}
           />
           <HeroMetricCard
             title="Security Score"
@@ -513,6 +552,7 @@ export default function DashboardPage() {
               variant: 'warning',
             }}
             href="/app/compliance"
+            sparklineData={[78, 80, 82, 85, 83, 85, 87]}
           />
           <HeroMetricCard
             title="Active Alerts"
@@ -531,6 +571,8 @@ export default function DashboardPage() {
               variant: 'success',
             }}
             href="/app/admin/alerts"
+            sparklineData={[5, 4, 3, 2, 1, 1, 0]}
+            trendInverted={true}
           />
           <HeroMetricCard
             title="Deployments/Week"
@@ -548,6 +590,7 @@ export default function DashboardPage() {
               label: '91.7% success',
               variant: 'success',
             }}
+            sparklineData={[8, 9, 10, 11, 10, 11, stats?.activeDeployments ?? 12]}
           />
         </div>
       )}
@@ -742,8 +785,8 @@ export default function DashboardPage() {
                   Ready to achieve these results?
                 </h3>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Join hundreds of engineering teams using DevControl to save money,
-                  ship faster, and reduce risk.
+                  Start optimizing your AWS infrastructure today. Average teams
+                  save $2,400/month with complete cost visibility.
                 </p>
                 <div className="flex items-center justify-center gap-4 pt-4">
                   <Button size="lg" className="bg-[#635BFF] hover:bg-[#4f46e5]">

@@ -33,7 +33,7 @@ const valueCards: ValueCard[] = [
   {
     icon: <DollarSign className="h-10 w-10" />,
     title: 'Cost Optimization',
-    description: 'Identify waste, rightsize resources, and reduce spending automatically with AI-powered recommendations',
+    description: 'Identify waste, rightsize resources, and reduce spending automatically with smart recommendations',
     features: ['Unused resource detection', 'Rightsizing recommendations', 'Cost anomaly alerts'],
     metric: 'Avg savings: $18K/year',
     bgColor: 'bg-green-100 text-green-700',
@@ -42,7 +42,7 @@ const valueCards: ValueCard[] = [
   {
     icon: <Shield className="h-10 w-10" />,
     title: 'Security Scanning',
-    description: 'Real-time security posture monitoring with automated compliance checks and vulnerability detection',
+    description: 'Continuous security posture monitoring with automated compliance checks and vulnerability detection',
     features: ['Compliance tracking', 'Vulnerability scanning', 'Access control audits'],
     metric: '100,000+ resources scanned',
     bgColor: 'bg-blue-100 text-blue-700',
@@ -71,7 +71,7 @@ const valueCards: ValueCard[] = [
     title: 'Team Collaboration',
     description: 'Centralized dashboard for your entire engineering team with role-based access and permissions',
     features: ['Role-based access', 'Team workspaces', 'Activity logging'],
-    metric: '500+ teams using',
+    metric: 'Role-based access',
     bgColor: 'bg-indigo-100 text-indigo-700',
     borderColor: 'border-indigo-200',
   },

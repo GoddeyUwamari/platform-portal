@@ -128,7 +128,7 @@ export const discoveryRateLimiter = rateLimit({
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per 15 minutes
+  max: 20, // 20 attempts per 15 minutes (increased for dev comfort)
 
   standardHeaders: true,
   legacyHeaders: false,
@@ -141,6 +141,14 @@ export const authRateLimiter = rateLimit({
       error: 'Too many authentication attempts. Please try again in 15 minutes.',
       retry_after: 900, // 15 minutes in seconds
     });
+  },
+
+  // Skip rate limiting in development if SKIP_RATE_LIMIT is enabled
+  skip: (req: Request) => {
+    if (process.env.NODE_ENV === 'development' && process.env.SKIP_RATE_LIMIT === 'true') {
+      return true;
+    }
+    return false;
   },
 });
 

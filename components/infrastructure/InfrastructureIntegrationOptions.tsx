@@ -66,11 +66,11 @@ export function InfrastructureIntegrationOptions() {
   return (
     <div className="space-y-4">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          🔗 Choose Your Integration Method
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Secure AWS Integration Methods
         </h2>
-        <p className="text-gray-600">
-          Select the best way to connect your AWS account
+        <p className="text-base text-muted-foreground">
+          Choose the authentication method that fits your security requirements
         </p>
       </div>
 

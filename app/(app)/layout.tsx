@@ -13,7 +13,18 @@ import { DemoModeToggle } from '@/components/demo/demo-mode-toggle';
 import { SalesDemoToggle } from '@/components/demo/sales-demo-toggle';
 import { AnnouncementBar } from '@/components/announcement-bar';
 import { Footer } from '@/components/footer';
+import { AccessibilityChecker } from '@/components/dev/AccessibilityChecker';
 
+/**
+ * App Layout - Authenticated Users Only
+ *
+ * TODO: Add authentication check - redirect non-authenticated users to /login
+ * Example (use server component or middleware):
+ *   const session = await getServerSession();
+ *   if (!session) {
+ *     redirect('/login');
+ *   }
+ */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const fetchStatus = useOnboardingStore((state) => state.fetchStatus);
   const breadcrumbs = useBreadcrumbs();
@@ -25,6 +36,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip to Content - Accessibility */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+
       {/* Announcement Bar */}
       <AnnouncementBar
         message="🚀 Limited Time Offer: Get 20% off annual plans!"
@@ -33,19 +49,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
 
       {/* Top Navigation - Shows on all authenticated pages */}
-      <TopNav />
+      <header role="banner">
+        <TopNav />
+      </header>
 
       {/* Breadcrumb Navigation */}
       {breadcrumbs.length > 0 && (
-        <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <nav
+          aria-label="Breadcrumb"
+          className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
             <Breadcrumb items={breadcrumbs} />
           </div>
-        </div>
+        </nav>
       )}
 
       {/* Main Content Area */}
-      <main>
+      <main id="main-content" role="main" tabIndex={-1}>
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
@@ -66,6 +87,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <Footer />
+
+      {/* Accessibility Checker (Development Only) */}
+      <AccessibilityChecker />
     </div>
   );
 }

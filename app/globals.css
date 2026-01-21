@@ -156,3 +156,302 @@
     animation: none;
   }
 }
+
+/* Driver.js Tour Customization */
+.driver-popover {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl;
+}
+
+.driver-popover-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.driver-popover-description {
+  @apply text-gray-600 dark:text-gray-300;
+}
+
+.driver-popover-description kbd {
+  @apply inline-block px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded;
+}
+
+.driver-popover-progress-text {
+  @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+.driver-popover-footer button {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.driver-popover-next-btn {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.driver-popover-prev-btn {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700;
+}
+
+.driver-popover-close-btn {
+  @apply text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200;
+}
+
+.driver-overlay {
+  @apply bg-black/50;
+}
+
+.driver-highlighted-element {
+  @apply bg-white dark:bg-gray-900;
+}
+
+/* Shimmer animation for empty states */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Respect user's motion preferences for shimmer */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}
+
+/* Trust Badge Animations */
+@keyframes sync-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sync-active {
+  animation: sync-pulse 2s ease-in-out infinite;
+}
+
+@keyframes trust-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.trust-badge-glow {
+  animation: trust-glow 2s ease-in-out infinite;
+}
+
+/* Status indicator pulse */
+@keyframes status-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.status-indicator-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Respect user's motion preferences for trust animations */
+@media (prefers-reduced-motion: reduce) {
+  .sync-active,
+  .trust-badge-glow,
+  .status-indicator-pulse {
+    animation: none;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY UTILITIES - WCAG 2.1 AA
+   ============================================ */
+
+/* Screen Reader Only - Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Screen reader only - focusable variant (becomes visible on focus) */
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Skip to content link - Accessibility navigation */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  z-index: 9999;
+  padding: 1rem 1.5rem;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 0 0 0.5rem 0;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.skip-to-content:focus {
+  left: 0;
+  top: 0;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Enhanced focus indicators - WCAG 2.4.7 Focus Visible */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Remove default focus outline when using focus-visible */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast focus for dark mode */
+.dark *:focus-visible {
+  outline-color: hsl(var(--ring));
+}
+
+/* Focus within for container elements */
+.focus-within-ring:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Reduced motion support - WCAG 2.3.3 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep essential state changes visible */
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support - WCAG 1.4.11 */
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+
+  .border {
+    border-color: currentColor !important;
+  }
+
+  /* Ensure buttons have visible borders */
+  button,
+  [role="button"] {
+    border: 2px solid currentColor !important;
+  }
+}
+
+/* Ensure minimum touch target size - WCAG 2.5.5 Target Size */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Live region for dynamic announcements */
+[aria-live] {
+  contain: layout;
+}
+
+/* Ensure text is selectable for assistive technologies */
+.user-select-text {
+  user-select: text;
+}
+
+/* Keyboard navigation indicator */
+.keyboard-navigating *:focus {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+/* Visually indicate required fields */
+.required-field::after {
+  content: " *";
+  color: hsl(var(--destructive));
+}
+
+/* Error state for form fields - WCAG 3.3.1 */
+.field-error {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+.field-error:focus-visible {
+  outline-color: hsl(var(--destructive));
+}
+
+/* Success state for form fields */
+.field-success {
+  border-color: hsl(142 76% 36%) !important;
+}
+
+/* Ensure sufficient color contrast for placeholder text */
+::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.7;
+}
+
+/* Print styles for accessibility */
+@media print {
+  .sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

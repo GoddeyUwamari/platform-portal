@@ -36,6 +36,12 @@ import { CostOptimizationPreview } from '@/components/infrastructure/CostOptimiz
 import { ResourceTypePreview } from '@/components/infrastructure/ResourceTypePreview'
 import { InfrastructureUseCases } from '@/components/infrastructure/InfrastructureUseCases'
 import { InfrastructureFAQ } from '@/components/infrastructure/InfrastructureFAQ'
+import { InfrastructureSecurityBadges } from '@/components/infrastructure/InfrastructureSecurityBadges'
+import { InfrastructureTrustSection } from '@/components/infrastructure/InfrastructureTrustSection'
+// REMOVED: Fake testimonials - legal compliance
+// import { InfrastructureTestimonials } from '@/components/infrastructure/InfrastructureTestimonials'
+import { InfrastructureMetricsBanner } from '@/components/infrastructure/InfrastructureMetricsBanner'
+import { InfrastructureComparison } from '@/components/infrastructure/InfrastructureComparison'
 
 type ResourceFilter = 'all' | ResourceType
 
@@ -97,49 +103,123 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 function EmptyState() {
   return (
-    <div className="space-y-10">
-      {/* Section 1: Stats Preview */}
+    <div className="space-y-16">
+      {/* Section 1: Stats Preview with Scenarios */}
       <InfrastructureStatsPreview />
 
-      {/* Section 2: Setup Steps */}
+      {/* Section 2: Metrics Banner */}
+      <InfrastructureMetricsBanner />
+
+      {/* Section 3: Security & Trust */}
+      <InfrastructureSecurityBadges />
+
+      {/* Section 4: Setup Steps */}
       <InfrastructureSetupSteps />
 
-      {/* Section 3: Dashboard Preview */}
+      {/* Section 5: Dashboard Preview */}
       <InfrastructurePreview />
 
-      {/* Section 4: Value Props */}
+      {/* Section 6: Value Props with ROI */}
       <InfrastructureValueProps />
 
-      {/* Section 5: Integration Options */}
+      {/* REMOVED: Section 7: Testimonials - fake testimonials removed for legal compliance */}
+
+      {/* Mid-Page CTA */}
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg border border-blue-500 p-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          Start Your Free 14-Day Trial
+        </h2>
+        <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
+          See your actual AWS costs and savings opportunities in minutes
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
+          <Button size="lg" variant="secondary" className="px-8 py-6 text-base font-semibold bg-white text-blue-600 hover:bg-blue-50">
+            Connect AWS Account
+          </Button>
+          <Button size="lg" variant="outline" className="px-8 py-6 text-base font-semibold border-white text-white hover:bg-white/10">
+            Schedule Demo
+          </Button>
+        </div>
+        {/* Trust Elements */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-blue-100">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Read-only access to your AWS account</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>3-minute setup</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Enterprise-grade security</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 8: Comparison Table */}
+      <InfrastructureComparison />
+
+      {/* Section 9: Trust Section (customer logos) */}
+      <InfrastructureTrustSection />
+
+      {/* Section 10: Integration Options */}
       <InfrastructureIntegrationOptions />
 
-      {/* Section 6: Cost Optimization */}
+      {/* Section 11: Cost Optimization */}
       <CostOptimizationPreview />
 
-      {/* Section 7: Resource Types */}
+      {/* Section 12: Resource Types */}
       <ResourceTypePreview />
 
-      {/* Section 8: Use Cases */}
+      {/* Section 13: Use Cases */}
       <InfrastructureUseCases />
 
-      {/* Section 9: FAQ */}
+      {/* Section 14: FAQ */}
       <InfrastructureFAQ />
 
-      {/* Section 10: CTA Footer */}
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Ready to optimize your AWS costs?
+      {/* Final CTA Footer */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-12 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          Ready to Optimize Your AWS Infrastructure?
         </h2>
-        <p className="text-gray-600 mb-6">
-          Connect your AWS account in 3 minutes and start saving
+        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Start optimizing your AWS infrastructure with complete cost visibility and control
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-            Connect AWS Account →
-          </button>
-          <button className="px-8 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">
-            View Documentation
-          </button>
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
+          <Button size="lg" className="px-8 py-6 text-base font-semibold">
+            Start Free 14-Day Trial
+          </Button>
+          <Button size="lg" variant="outline" className="px-8 py-6 text-base font-semibold">
+            Schedule Demo
+          </Button>
+        </div>
+        {/* Trust Elements */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>No credit card required</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Cancel anytime</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>14-day free trial</span>
+          </div>
         </div>
       </div>
     </div>
@@ -249,9 +329,9 @@ export default function InfrastructurePage() {
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Infrastructure Resources</h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor AWS resources and track monthly costs
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">AWS Infrastructure</h1>
+          <p className="text-base text-muted-foreground mt-2">
+            Complete visibility and cost optimization for your AWS resources
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -285,17 +365,17 @@ export default function InfrastructurePage() {
       {/* Cost Summary Card */}
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Server className="h-5 w-5 text-blue-600" />
-            Total Monthly Cost
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Server className="h-6 w-6 text-blue-600" />
+            Total Monthly Infrastructure Cost
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold text-blue-900">
+          <div className="text-4xl md:text-5xl font-bold text-blue-900">
             {formatCurrency(totalMonthlyCost)}
           </div>
-          <p className="text-sm text-blue-700 mt-1">
-            {resources.length} {resources.length === 1 ? 'resource' : 'resources'} tracked
+          <p className="text-sm text-blue-700 mt-2">
+            {resources.length} {resources.length === 1 ? 'resource' : 'resources'} actively tracked
           </p>
         </CardContent>
       </Card>

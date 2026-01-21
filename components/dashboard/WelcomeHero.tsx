@@ -66,11 +66,11 @@ export function WelcomeHero() {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-600" />
-                <span>2-minute setup</span>
+                <span>3-minute setup</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-600" />
-                <span>500+ teams</span>
+                <span>Read-only access</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-600" />

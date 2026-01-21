@@ -19,7 +19,7 @@ export function CTASection() {
             Ready to optimize your AWS infrastructure?
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Join 500+ engineering teams using DevControl to save money and ship faster.
+            Engineering teams save an average of $2,400/month with DevControl.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

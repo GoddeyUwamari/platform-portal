@@ -37,11 +37,11 @@ export function InfrastructureFAQ() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          ❓ Frequently Asked Questions
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Frequently Asked Questions
         </h2>
-        <p className="text-gray-600">
-          Common questions about AWS infrastructure tracking
+        <p className="text-base text-muted-foreground">
+          Common questions about AWS infrastructure tracking and security
         </p>
       </div>
 

@@ -39,8 +39,13 @@ export function DemoModeToggle() {
       detail: { enabled: newValue }
     }));
 
-    // Reload page to apply changes
-    window.location.reload();
+    // When turning ON demo mode, navigate to dashboard
+    // When turning OFF, stay on current page and reload
+    if (newValue) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.reload();
+    }
   };
 
   return (

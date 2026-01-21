@@ -21,6 +21,7 @@ interface TimelineEntry {
   }
 }
 
+// Example deployment data for UI preview (placeholder names)
 const exampleDeployments: TimelineEntry[] = [
   {
     id: '1',
@@ -28,8 +29,8 @@ const exampleDeployments: TimelineEntry[] = [
     service: 'payment-api',
     environment: 'production',
     deployedBy: {
-      name: 'Sarah Chen',
-      avatar: 'SC',
+      name: 'Team Member',
+      avatar: 'TM',
     },
     status: 'success',
     duration: '4m 23s',
@@ -44,8 +45,8 @@ const exampleDeployments: TimelineEntry[] = [
     service: 'user-service',
     environment: 'staging',
     deployedBy: {
-      name: 'Mike Johnson',
-      avatar: 'MJ',
+      name: 'Developer',
+      avatar: 'DV',
     },
     status: 'success',
     duration: '2m 15s',
@@ -60,8 +61,8 @@ const exampleDeployments: TimelineEntry[] = [
     service: 'notification-service',
     environment: 'production',
     deployedBy: {
-      name: 'Alex Rivera',
-      avatar: 'AR',
+      name: 'Engineer',
+      avatar: 'EN',
     },
     status: 'failed',
     duration: '1m 42s',

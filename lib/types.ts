@@ -691,3 +691,111 @@ export interface AlertStatsResponse {
   success: boolean;
   data: AlertStats;
 }
+
+// =====================================================
+// DEPENDENCY MANAGEMENT TYPES
+// =====================================================
+
+export type DependencyType = 'runtime' | 'data' | 'deployment' | 'shared-lib';
+
+export interface ServiceDependency {
+  id: string;
+  organizationId: string;
+  sourceServiceId: string;
+  targetServiceId: string;
+  sourceServiceName?: string;
+  targetServiceName?: string;
+  sourceServiceStatus?: string;
+  targetServiceStatus?: string;
+  dependencyType: DependencyType;
+  description?: string;
+  isCritical: boolean;
+  metadata?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDependencyPayload {
+  sourceServiceId: string;
+  targetServiceId: string;
+  dependencyType: DependencyType;
+  description?: string;
+  isCritical?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateDependencyPayload {
+  dependencyType?: DependencyType;
+  description?: string;
+  isCritical?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DependencyFilters {
+  sourceServiceId?: string;
+  targetServiceId?: string;
+  dependencyType?: DependencyType;
+  isCritical?: boolean;
+}
+
+export interface DependencyGraphNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    status?: string;
+    owner?: string;
+    template?: string;
+  };
+}
+
+export interface DependencyGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  label?: string;
+  animated?: boolean;
+  data?: {
+    dependencyType?: string;
+    isCritical?: boolean;
+    description?: string;
+  };
+}
+
+export interface DependencyGraph {
+  nodes: DependencyGraphNode[];
+  edges: DependencyGraphEdge[];
+}
+
+export interface ImpactAnalysisDependency {
+  id: string;
+  name: string;
+  dependencyType: string;
+  isCritical: boolean;
+}
+
+export interface ImpactAnalysis {
+  serviceId: string;
+  serviceName: string;
+  upstreamDependencies: ImpactAnalysisDependency[];
+  downstreamDependencies: ImpactAnalysisDependency[];
+  totalUpstream: number;
+  totalDownstream: number;
+  totalAffectedIfFails: number;
+  criticalPath: boolean;
+}
+
+export interface CircularDependencyService {
+  serviceId: string;
+  serviceName: string;
+}
+
+export interface CircularDependency {
+  cycle: CircularDependencyService[];
+  path: string;
+  dependencyIds: string[];
+  severity: string;
+}

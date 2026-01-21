@@ -23,6 +23,13 @@ export const metadata: Metadata = {
  *
  * Modern SaaS landing page with hero section, features, social proof, and CTAs.
  * Optimized for conversion and built with performance in mind.
+ *
+ * TODO: Add authentication check - redirect logged-in users to /dashboard
+ * Example:
+ *   const session = await getServerSession();
+ *   if (session) {
+ *     redirect('/dashboard');
+ *   }
  */
 export default function Home() {
   return (

@@ -63,11 +63,11 @@ export function InfrastructureSetupSteps() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          🚀 Quick Setup: Connect AWS in 3 Minutes
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Connect Your AWS Account in 3 Minutes
         </h2>
-        <p className="text-gray-600">
-          Follow these 4 simple steps to start tracking your infrastructure
+        <p className="text-base text-muted-foreground">
+          Secure, read-only integration with step-by-step guidance
         </p>
       </div>
 
@@ -117,8 +117,8 @@ export function InfrastructureSetupSteps() {
                 {step.description}
               </p>
 
-              <div className="text-xs text-gray-500 text-center mb-4">
-                ⏱️ {step.time}
+              <div className="text-xs text-muted-foreground text-center mb-4">
+                {step.time}
               </div>
 
               {/* Action Button */}

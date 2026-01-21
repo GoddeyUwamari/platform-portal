@@ -147,6 +147,7 @@ const footerData: FooterColumn[] = [
           { label: 'Security & Compliance', href: '/company/security' },
           { label: 'Privacy Policy', href: '/legal/privacy' },
           { label: 'Terms of Service', href: '/legal/terms' },
+          { label: 'Data Processing Agreement', href: '/legal/dpa' },
           { label: 'Trust Center', href: '/company/trust' },
           { label: 'Accessibility', href: '/legal/accessibility' },
         ],

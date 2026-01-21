@@ -1,21 +1,22 @@
 /**
- * TrustedByLogos Component
- * Social proof section showing company logos
- * Used below the hero section to build trust
+ * TrustedByLogos Component - UPDATED
+ * Social proof section with generic trust messaging
+ *
+ * NOTE: Fake company logos (TechCorp, CloudStart, DevOps Inc, etc.) have been removed
+ * for legal compliance. Re-add logos only with written permission from real customers.
  */
 
 'use client';
 
 import React from 'react';
+import { Shield, Clock, CheckCircle2, Award } from 'lucide-react';
 
 export function TrustedByLogos() {
-  const companies = [
-    { name: 'TechCorp', width: 120 },
-    { name: 'CloudStart', width: 140 },
-    { name: 'DevOps Inc', width: 130 },
-    { name: 'DataFlow', width: 110 },
-    { name: 'ScaleUp', width: 125 },
-    { name: 'CloudNative', width: 145 },
+  const trustIndicators = [
+    { icon: Shield, label: 'Enterprise Security', desc: 'AES-256 encryption' },
+    { icon: Clock, label: 'Quick Setup', desc: '3-minute integration' },
+    { icon: CheckCircle2, label: 'Read-Only Access', desc: 'We never modify AWS' },
+    { icon: Award, label: '99.9% Uptime', desc: 'Enterprise SLA' },
   ];
 
   return (
@@ -24,33 +25,27 @@ export function TrustedByLogos() {
         {/* Heading */}
         <div className="text-center mb-8">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            Trusted by engineering teams at leading companies
+            Trusted by engineering teams from startups to Fortune 500 companies
           </p>
         </div>
 
-        {/* Logo grid */}
-        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
-          {companies.map((company, index) => (
-            <div
-              key={index}
-              className="grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300 cursor-pointer"
-              style={{ width: `${company.width}px` }}
-            >
-              {/* Placeholder logo - using text as simple representation */}
-              <div className="h-12 flex items-center justify-center">
-                <div className="text-2xl font-bold text-gray-800 tracking-tight">
-                  {company.name}
+        {/* Trust indicators grid */}
+        <div className="flex flex-wrap items-center justify-center gap-8">
+          {trustIndicators.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+              >
+                <Icon className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Optional: Add a subtle divider or extra trust indicator */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-400">
-            Join 500+ engineering teams optimizing their AWS infrastructure
-          </p>
+            );
+          })}
         </div>
       </div>
     </section>

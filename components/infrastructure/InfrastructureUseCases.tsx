@@ -60,11 +60,11 @@ export function InfrastructureUseCases() {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          💼 Real-World Use Cases
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Enterprise Use Cases
         </h2>
-        <p className="text-gray-600">
-          See how teams use DevControl to solve common AWS cost challenges
+        <p className="text-base text-muted-foreground">
+          How engineering and finance teams leverage DevControl for AWS cost management
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export function InfrastructureUseCases() {
                 <ul className="space-y-1">
                   {useCase.before.map((item, idx) => (
                     <li key={idx} className="text-sm text-gray-600 flex items-start">
-                      <span className="text-red-500 mr-2">❌</span>
+                      <span className="text-red-500 mr-2 flex-shrink-0">×</span>
                       {item}
                     </li>
                   ))}
@@ -118,7 +118,7 @@ export function InfrastructureUseCases() {
               <ul className="space-y-1">
                 {useCase.after.map((item, idx) => (
                   <li key={idx} className="text-sm text-gray-600 flex items-start">
-                    <span className="text-green-500 mr-2">✅</span>
+                    <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
                     {item}
                   </li>
                 ))}

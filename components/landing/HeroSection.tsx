@@ -32,7 +32,7 @@ export function HeroSection() {
               className="py-2 px-4 border-[#635BFF]/20 hover:border-[#635BFF]/40 transition-colors cursor-pointer"
             >
               <Sparkles className="h-3 w-3 mr-2 text-[#635BFF]" />
-              <span className="text-sm">New: AI-powered cost optimization</span>
+              <span className="text-sm">New: Automated cost optimization</span>
               <ArrowRight className="h-3 w-3 ml-2" />
             </Badge>
           </div>

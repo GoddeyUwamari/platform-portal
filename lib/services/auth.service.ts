@@ -188,4 +188,23 @@ export const tokenManager = {
   hasValidToken(): boolean {
     return !!this.getAccessToken();
   },
+
+  /**
+   * Set auth cookie for middleware
+   */
+  setAuthCookie(token: string): void {
+    if (typeof window === "undefined") return;
+    // Set cookie with SameSite and Secure flags for better compatibility
+    const isSecure = window.location.protocol === "https:";
+    const secureFlag = isSecure ? " Secure;" : "";
+    document.cookie = `auth-token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax;${secureFlag}`;
+  },
+
+  /**
+   * Clear auth cookie
+   */
+  clearAuthCookie(): void {
+    if (typeof window === "undefined") return;
+    document.cookie = "auth-token=; path=/; max-age=0; SameSite=Lax";
+  },
 };

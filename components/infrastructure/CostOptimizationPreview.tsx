@@ -43,11 +43,11 @@ export function CostOptimizationPreview() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          💡 Cost Optimization: What You&apos;ll Discover
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Automated Cost Optimization Insights
         </h2>
-        <p className="text-gray-600">
-          Example insights DevControl will automatically detect
+        <p className="text-base text-muted-foreground">
+          AI-powered recommendations to reduce AWS spending automatically
         </p>
       </div>
 

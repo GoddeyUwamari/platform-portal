@@ -58,13 +58,13 @@ const faqs: FAQItem[] = [
   {
     icon: DollarSign,
     question: 'How do you calculate cost savings?',
-    answer: 'We analyze your AWS usage patterns, identify idle resources, right-sizing opportunities, and reserved instance recommendations. Our AI-powered engine compares your current spend against optimized configurations.',
+    answer: 'We analyze your AWS usage patterns, identify idle resources, right-sizing opportunities, and reserved instance recommendations. Our automated engine compares your current spend against optimized configurations.',
     accentColor: 'emerald',
   },
   {
     icon: Lock,
     question: 'Is my data secure?',
-    answer: 'Yes. We use enterprise-grade encryption (AES-256), SOC 2 Type II compliance, and follow AWS security best practices. Your infrastructure data is encrypted at rest and in transit with TLS 1.3.',
+    answer: 'Yes. We use enterprise-grade encryption (AES-256) and follow AWS security best practices. Your infrastructure data is encrypted at rest and in transit with TLS 1.3. We are GDPR compliant and working toward SOC 2 Type II certification.',
     accentColor: 'red',
   },
   {

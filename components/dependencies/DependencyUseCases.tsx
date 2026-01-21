@@ -133,26 +133,14 @@ export function DependencyUseCases() {
         })}
       </div>
 
-      {/* Testimonial */}
-      <div className="mt-6 bg-white rounded-lg p-6 border-2 border-blue-200">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-              JD
-            </div>
-          </div>
-          <div>
-            <p className="text-gray-700 italic mb-3">
-              "Dependency mapping saved us during a critical incident. We identified the blast
-              radius in seconds and communicated the impact to leadership immediately. What used to
-              take 30 minutes of manual investigation now takes 10 seconds."
-            </p>
-            <div className="text-sm">
-              <div className="font-semibold text-gray-900">Jane Doe</div>
-              <div className="text-gray-500">Platform Engineering Lead, TechCorp</div>
-            </div>
-          </div>
-        </div>
+      {/* Value Summary */}
+      <div className="mt-6 bg-white rounded-lg p-6 border-2 border-blue-200 text-center">
+        <p className="text-gray-700 mb-2">
+          Reduce incident triage time by understanding your service dependencies at a glance.
+        </p>
+        <p className="text-sm text-gray-500">
+          Connect your services to start mapping dependencies automatically.
+        </p>
       </div>
     </div>
   );

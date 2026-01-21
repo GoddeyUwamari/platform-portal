@@ -34,10 +34,10 @@ const securityFeatures = [
 ];
 
 const complianceBadges = [
-  { name: 'SOC 2 Type II', status: 'Certified' },
+  { name: 'Enterprise Security', status: 'Bank-level encryption' },
   { name: 'GDPR', status: 'Compliant' },
-  { name: 'ISO 27001', status: 'Certified' },
-  { name: 'HIPAA', status: 'Ready' },
+  { name: 'Data Protection', status: 'AES-256 encryption' },
+  { name: 'Access Control', status: 'Role-based' },
 ];
 
 export function TrustIndicators() {

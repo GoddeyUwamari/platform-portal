@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircle, FileText } from 'lucide-react'
+import { AlertCircle, FileText, Activity } from 'lucide-react'
 import { useDemoMode } from '@/components/demo/demo-mode-toggle'
 import { DeploymentIntegrations } from '@/components/deployments/DeploymentIntegrations'
 import { DeploymentTimelinePreview } from '@/components/deployments/DeploymentTimelinePreview'
@@ -182,6 +182,16 @@ export default function DeploymentsPage() {
 
   return (
     <div className="space-y-6 px-4 md:px-6 lg:px-8 py-6">
+      {/* Demo Mode Indicator */}
+      {demoMode && (
+        <div className="bg-purple-600 text-white px-4 py-3 rounded-lg text-center font-medium -mx-4 md:-mx-6 lg:-mx-8 -mt-6 mb-6">
+          <div className="flex items-center justify-center gap-2">
+            <Activity className="w-4 h-4 animate-pulse" />
+            <span>Demo Mode Active - Showing sample deployment history</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Deployment History</h1>

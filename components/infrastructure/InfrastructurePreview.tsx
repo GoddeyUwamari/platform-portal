@@ -2,20 +2,20 @@ import { TrendingUp, AlertTriangle, MapPin } from 'lucide-react';
 
 export function InfrastructurePreview() {
   const services = [
-    { icon: '🖥️', name: 'EC2', cost: '$1,200', count: '12 instances' },
-    { icon: '🗄️', name: 'RDS', cost: '$890', count: '4 DBs' },
-    { icon: '📦', name: 'S3', cost: '$245', count: '23 buckets' },
-    { icon: '🌐', name: 'ELB', cost: '$312', count: '3 LBs' },
+    { name: 'EC2', cost: '$1,200', count: '12 instances' },
+    { name: 'RDS', cost: '$890', count: '4 DBs' },
+    { name: 'S3', cost: '$245', count: '23 buckets' },
+    { name: 'ELB', cost: '$312', count: '3 LBs' },
   ];
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          📊 Preview: Your Infrastructure Dashboard
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
+          Preview Your Infrastructure Dashboard
         </h2>
-        <p className="text-gray-600">
-          This is what you&apos;ll see after connecting AWS
+        <p className="text-base text-muted-foreground">
+          Real-time visibility into your AWS environment after connecting your account
         </p>
       </div>
 
@@ -51,14 +51,13 @@ export function InfrastructurePreview() {
               key={index}
               className="bg-white rounded-lg border border-gray-200 p-4 text-center"
             >
-              <div className="text-3xl mb-2">{service.icon}</div>
-              <div className="font-semibold text-gray-900 mb-1">
+              <div className="text-lg font-semibold text-gray-900 mb-2">
                 {service.name}
               </div>
-              <div className="text-lg font-bold text-blue-600 mb-1">
+              <div className="text-xl font-bold text-blue-600 mb-1">
                 {service.cost}
               </div>
-              <div className="text-xs text-gray-500">{service.count}</div>
+              <div className="text-xs text-muted-foreground">{service.count}</div>
             </div>
           ))}
         </div>

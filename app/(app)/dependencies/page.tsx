@@ -1,18 +1,22 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Network, List, Activity, AlertTriangle, Plus, Command } from 'lucide-react'
+import { Network, List, Activity, AlertTriangle, Plus, Command, Play, Clock, RefreshCw } from 'lucide-react'
+import { useDemoMode } from '@/components/demo/demo-mode-toggle'
+import { announceToScreenReader, formatCountForScreenReader } from '@/lib/utils/accessibility'
+import { createAppError, AppError } from '@/lib/errors/error-types'
+import { retryApiCall } from '@/lib/utils/retry'
+import { ErrorDisplay } from '@/components/ui/error-display'
+import { OfflineDetector, useOnlineStatus, CachedDataIndicator } from '@/components/ui/offline-detector'
+import { DemoModeInlineToggle } from '@/components/demo/DemoModeInlineToggle'
+import { DemoModeBanner } from '@/components/demo/DemoModeBanner'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { dependenciesService } from '@/lib/services/dependencies.service'
 import { servicesService } from '@/lib/services/services.service'
-import { DependencySetupSteps } from '@/components/dependencies/DependencySetupSteps'
-import { DependencyGraphPreview } from '@/components/dependencies/DependencyGraphPreview'
-import { DependencyBenefits } from '@/components/dependencies/DependencyBenefits'
-import { DependencyIntegrations } from '@/components/dependencies/DependencyIntegrations'
-import { DependencyUseCases } from '@/components/dependencies/DependencyUseCases'
+import { EnhancedEmptyState } from '@/components/dependencies/EnhancedEmptyState'
 import { ExportMenu } from '@/components/dependencies/ExportMenu'
 import { DependencySearch, type DependencySearchHandle } from '@/components/dependencies/DependencySearch'
 import { DependencyFilters, type DependencyFiltersHandle } from '@/components/dependencies/DependencyFilters'
@@ -21,6 +25,19 @@ import { KeyboardShortcutsModal } from '@/components/dependencies/KeyboardShortc
 import { useDependencySearch } from '@/lib/hooks/use-dependency-search'
 import { useDependencyFilters } from '@/lib/hooks/use-dependency-filters'
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts'
+import { StatCardWithTrend } from '@/components/stats/stat-card-with-trend'
+import { DEMO_DEPENDENCY_STATS, generateStatsWithTrends } from '@/lib/demo/demo-trends'
+import { DEMO_DEPENDENCIES, DEMO_CIRCULAR_DEPENDENCIES } from '@/lib/demo/demo-dependencies'
+import { LastSynced } from '@/components/ui/last-synced'
+import { SyncStatusBanner } from '@/components/ui/sync-status-banner'
+import { DEMO_LAST_SYNCED, DEMO_SYNC_STATUS } from '@/lib/demo/demo-timestamps'
+import { useOnboardingTour } from '@/lib/hooks/use-onboarding-tour'
+import { TourButton } from '@/components/onboarding/tour-button'
+import { WelcomeModal } from '@/components/onboarding/welcome-modal'
+import { SystemStatusBadge } from '@/components/ui/system-status-badge'
+import { DataFreshnessIndicator } from '@/components/ui/data-freshness-indicator'
+import { SecurityBadge } from '@/components/ui/security-badge'
+import { SyncHealthStatus } from '@/components/ui/sync-health-status'
 import dynamic from 'next/dynamic'
 
 // Dynamically import React Flow component to avoid SSR issues
@@ -44,7 +61,13 @@ const AddDependencyDialog = dynamic(
   { ssr: false }
 )
 
+const DEMO_MODE_KEY = 'devcontrol_demo_mode'
+const CACHE_KEY = 'dependencies_cache'
+const CACHE_TIMESTAMP_KEY = 'dependencies_cache_timestamp'
+
 export default function DependenciesPage() {
+  const globalDemoMode = useDemoMode()
+  const [localDemoMode, setLocalDemoMode] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('graph')
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -52,17 +75,121 @@ export default function DependenciesPage() {
   const searchRef = useRef<DependencySearchHandle>(null)
   const exportButtonRef = useRef<HTMLButtonElement>(null)
   const filtersRef = useRef<DependencyFiltersHandle>(null)
+  const { startTour } = useOnboardingTour('dependencies-page')
 
-  // Fetch all dependencies
+  // Online status
+  const isOnline = useOnlineStatus()
+
+  // Error handling state
+  const [pageError, setPageError] = useState<AppError | null>(null)
+  const [isRetrying, setIsRetrying] = useState(false)
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
+
+  // Cached data for graceful degradation
+  const [cachedDependencies, setCachedDependencies] = useState<typeof DEMO_DEPENDENCIES>([])
+  const [cachedTimestamp, setCachedTimestamp] = useState<Date | null>(null)
+
+  // Sync local state with global demo mode
+  useEffect(() => {
+    const stored = localStorage.getItem(DEMO_MODE_KEY)
+    setLocalDemoMode(stored === 'true' || globalDemoMode)
+  }, [globalDemoMode])
+
+  // Combined demo mode state
+  const demoMode = localDemoMode || globalDemoMode
+
+  // Initialize timestamps based on demo mode
+  const [lastSynced, setLastSynced] = useState<Date>(demoMode ? DEMO_LAST_SYNCED : new Date())
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'synced' | 'error'>(DEMO_SYNC_STATUS)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [syncHealthStatus, setSyncHealthStatus] = useState<'healthy' | 'warning' | 'error'>('healthy')
+
+  // Toggle demo mode function
+  const toggleDemoMode = useCallback((enabled: boolean) => {
+    setLocalDemoMode(enabled)
+    localStorage.setItem(DEMO_MODE_KEY, String(enabled))
+    window.dispatchEvent(new CustomEvent('demo-mode-changed', {
+      detail: { enabled }
+    }))
+  }, [])
+
+  // Load cached data on mount
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY)
+      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
+      if (cached) {
+        setCachedDependencies(JSON.parse(cached))
+      }
+      if (timestamp) {
+        setCachedTimestamp(new Date(timestamp))
+      }
+    } catch (e) {
+      console.error('Failed to load cached dependencies:', e)
+    }
+  }, [])
+
+  // Fetch all dependencies with retry logic
   const {
     data: dependencies = [],
     isLoading,
-    error,
+    error: queryError,
     refetch,
   } = useQuery({
     queryKey: ['dependencies'],
-    queryFn: () => dependenciesService.getAll(),
+    queryFn: async () => {
+      try {
+        setPageError(null)
+        const data = await retryApiCall(
+          () => dependenciesService.getAll(),
+          'fetch dependencies'
+        )
+        return data
+      } catch (err) {
+        const appError = createAppError(err, 'load dependencies')
+        setPageError(appError)
+        throw err
+      }
+    },
+    retry: false, // We handle retry ourselves
+    staleTime: 30000, // 30 seconds
   })
+
+  // Save dependencies to cache on successful fetch
+  useEffect(() => {
+    if (dependencies && dependencies.length > 0) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(dependencies))
+        localStorage.setItem(CACHE_TIMESTAMP_KEY, new Date().toISOString())
+        setCachedDependencies(dependencies)
+        setCachedTimestamp(new Date())
+      } catch (e) {
+        console.error('Failed to cache dependencies:', e)
+      }
+    }
+  }, [dependencies])
+
+  // Loading timeout detection
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingTimeout(false)
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true)
+        announceToScreenReader('Loading is taking longer than usual', 'polite')
+      }, 15000) // 15 seconds
+      return () => clearTimeout(timer)
+    } else {
+      setLoadingTimeout(false)
+    }
+  }, [isLoading])
+
+  // Handle query error
+  useEffect(() => {
+    if (queryError && !pageError) {
+      const appError = createAppError(queryError, 'load dependencies')
+      setPageError(appError)
+    }
+  }, [queryError, pageError])
 
   // Fetch services to check if user has any
   const { data: services = [] } = useQuery({
@@ -79,7 +206,22 @@ export default function DependenciesPage() {
     queryFn: () => dependenciesService.detectCircularDependencies(),
   })
 
-  // Search functionality
+  // Use demo data when in demo mode, fallback to cache when error/offline
+  const shouldUseCachedData = !demoMode && (pageError || !isOnline) && cachedDependencies.length > 0
+  const displayDependencies = demoMode
+    ? DEMO_DEPENDENCIES
+    : shouldUseCachedData
+    ? cachedDependencies
+    : dependencies
+  const displayCycles = demoMode ? DEMO_CIRCULAR_DEPENDENCIES : cycles
+
+  const hasDependencies = displayDependencies.length > 0
+  const hasServices = services.length > 0 || demoMode
+
+  // Determine if we're showing cached/stale data
+  const isShowingCachedData = shouldUseCachedData && cachedTimestamp !== null
+
+  // Search functionality - use displayed dependencies
   const {
     query,
     setQuery,
@@ -87,7 +229,7 @@ export default function DependenciesPage() {
     isSearching,
     clearSearch,
     hasActiveSearch,
-  } = useDependencySearch(dependencies)
+  } = useDependencySearch(displayDependencies)
 
   // Filter functionality
   const {
@@ -99,10 +241,10 @@ export default function DependenciesPage() {
   } = useDependencyFilters(results)
 
   // Map filtered search results back to ServiceDependency type
-  const displayedDependencies = filteredResults
+  const filteredDisplayDependencies = filteredResults
     .map((result) => {
       // Find the original dependency by matching serviceName and dependsOn
-      return dependencies.find(
+      return displayDependencies.find(
         (dep) =>
           (dep.sourceServiceName || dep.sourceServiceId) === result.item.serviceName &&
           (dep.targetServiceName || dep.targetServiceId) === result.item.dependsOn
@@ -110,20 +252,27 @@ export default function DependenciesPage() {
     })
     .filter((dep): dep is NonNullable<typeof dep> => dep !== undefined)
 
-  // Calculate stats
+  // Calculate stats from displayed data (real or demo)
   const stats = {
-    total: dependencies.length,
-    critical: dependencies.filter(d => d.isCritical).length,
+    total: displayDependencies.length,
+    critical: displayDependencies.filter(d => d.isCritical).length,
     byType: {
-      runtime: dependencies.filter(d => d.dependencyType === 'runtime').length,
-      data: dependencies.filter(d => d.dependencyType === 'data').length,
-      deployment: dependencies.filter(d => d.dependencyType === 'deployment').length,
-      'shared-lib': dependencies.filter(d => d.dependencyType === 'shared-lib').length,
+      runtime: displayDependencies.filter(d => d.dependencyType === 'runtime').length,
+      data: displayDependencies.filter(d => d.dependencyType === 'data').length,
+      deployment: displayDependencies.filter(d => d.dependencyType === 'deployment').length,
+      'shared-lib': displayDependencies.filter(d => d.dependencyType === 'shared-lib').length,
     },
   }
 
-  const hasDependencies = dependencies.length > 0
-  const hasServices = services.length > 0
+  // Generate stats with trends - use demo stats for consistent display in demo mode
+  const statsWithTrends = demoMode
+    ? DEMO_DEPENDENCY_STATS
+    : generateStatsWithTrends(
+        stats.total,
+        stats.critical,
+        stats.byType.runtime,
+        displayCycles.length
+      )
 
   // Setup keyboard shortcuts
   useKeyboardShortcuts({
@@ -134,8 +283,121 @@ export default function DependenciesPage() {
     onExport: () => exportButtonRef.current?.click(),
   })
 
-  // Empty State
-  if (!isLoading && !hasDependencies) {
+  // Announce dependencies loaded to screen readers
+  useEffect(() => {
+    if (!isLoading && displayDependencies.length > 0) {
+      announceToScreenReader(
+        formatCountForScreenReader(displayDependencies.length, 'dependency', 'dependencies') + ' loaded',
+        'polite'
+      )
+    }
+  }, [isLoading, displayDependencies.length])
+
+  // Announce filter results to screen readers
+  useEffect(() => {
+    if (activeFilterCount > 0 || hasActiveSearch) {
+      announceToScreenReader(
+        `Showing ${formatCountForScreenReader(filteredDisplayDependencies.length, 'result')} of ${displayDependencies.length} dependencies`,
+        'polite'
+      )
+    }
+  }, [filteredDisplayDependencies.length, activeFilterCount, hasActiveSearch, displayDependencies.length])
+
+  // Handle view change with screen reader announcement
+  const handleViewChange = useCallback((view: string) => {
+    setActiveTab(view)
+    const viewNames: Record<string, string> = {
+      graph: 'Graph View',
+      list: 'List View',
+      impact: 'Impact Analysis',
+    }
+    announceToScreenReader(`Switched to ${viewNames[view] || view}`, 'polite')
+  }, [])
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    if (!isOnline) {
+      announceToScreenReader('Cannot refresh while offline', 'assertive')
+      return
+    }
+
+    setIsRefreshing(true)
+    setSyncStatus('syncing')
+    setSyncHealthStatus('healthy')
+    setPageError(null)
+    announceToScreenReader('Refreshing dependencies', 'polite')
+
+    try {
+      await Promise.all([refetch(), refetchCycles()])
+      setLastSynced(new Date())
+      setSyncStatus('synced')
+      setSyncHealthStatus('healthy')
+      announceToScreenReader('Dependencies refreshed successfully', 'polite')
+    } catch (err) {
+      const appError = createAppError(err, 'refresh dependencies')
+      setPageError(appError)
+      setSyncStatus('error')
+      setSyncHealthStatus('error')
+      announceToScreenReader('Error refreshing dependencies', 'assertive')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  // Handle error retry
+  const handleRetryError = async () => {
+    if (!isOnline) {
+      announceToScreenReader('Cannot retry while offline', 'assertive')
+      return
+    }
+
+    setIsRetrying(true)
+    setPageError(null)
+    announceToScreenReader('Retrying...', 'polite')
+
+    try {
+      await Promise.all([refetch(), refetchCycles()])
+      setLastSynced(new Date())
+      setSyncStatus('synced')
+      setSyncHealthStatus('healthy')
+      announceToScreenReader('Successfully loaded dependencies', 'polite')
+    } catch (err) {
+      const appError = createAppError(err, 'load dependencies')
+      setPageError(appError)
+      announceToScreenReader('Retry failed', 'assertive')
+    } finally {
+      setIsRetrying(false)
+    }
+  }
+
+  // Handle error dismiss
+  const handleDismissError = () => {
+    setPageError(null)
+  }
+
+  // Handle online/offline events
+  const handleOnline = useCallback(() => {
+    announceToScreenReader('Connection restored. Refreshing data...', 'polite')
+    // Auto-refresh when coming back online
+    handleRefresh()
+  }, [])
+
+  const handleOffline = useCallback(() => {
+    announceToScreenReader('Connection lost. Showing cached data.', 'assertive')
+  }, [])
+
+  // Enable demo mode function (for empty state)
+  const enableDemoMode = () => {
+    toggleDemoMode(true)
+  }
+
+  // Disable demo mode function
+  const disableDemoMode = () => {
+    toggleDemoMode(false)
+  }
+
+  // Empty State - but NOT when demo mode is on
+  if (!isLoading && !hasDependencies && !demoMode) {
     return (
       <div className="space-y-6 p-6">
         {/* Header */}
@@ -147,29 +409,18 @@ export default function DependenciesPage() {
                 Visualize and manage service dependency relationships
               </p>
             </div>
-            {hasServices && (
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Dependency
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Setup Steps */}
-        <DependencySetupSteps hasServices={hasServices} />
-
-        {/* Graph Preview */}
-        <DependencyGraphPreview />
-
-        {/* Value Proposition */}
-        <DependencyBenefits />
-
-        {/* Integration Options */}
-        <DependencyIntegrations />
-
-        {/* Use Cases */}
-        <DependencyUseCases />
+        {/* Enhanced Empty State */}
+        <EnhancedEmptyState
+          onAddDependency={() => setIsAddDialogOpen(true)}
+          onEnableDemoMode={enableDemoMode}
+          onImport={() => {
+            // Future: Handle import functionality
+          }}
+          hasServices={hasServices}
+        />
 
         {/* Add Dependency Dialog */}
         {hasServices && (
@@ -188,9 +439,55 @@ export default function DependenciesPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Offline Detector */}
+      <OfflineDetector onOnline={handleOnline} onOffline={handleOffline} />
+
+      {/* Error Display */}
+      {pageError && !isShowingCachedData && (
+        <ErrorDisplay
+          error={pageError}
+          onRetry={pageError.retryable ? handleRetryError : undefined}
+          onDismiss={handleDismissError}
+          isRetrying={isRetrying}
+        />
+      )}
+
+      {/* Cached Data Indicator */}
+      {isShowingCachedData && cachedTimestamp && (
+        <CachedDataIndicator
+          lastSyncedAt={cachedTimestamp}
+          onRefresh={isOnline ? handleRefresh : undefined}
+          isRefreshing={isRefreshing}
+        />
+      )}
+
+      {/* Loading Timeout Warning */}
+      {isLoading && loadingTimeout && (
+        <div className="flex flex-col items-center justify-center py-12 px-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+          <Clock className="w-12 h-12 mb-4 text-orange-500 dark:text-orange-400" aria-hidden="true" />
+          <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-200 mb-2">
+            This is taking longer than usual
+          </h3>
+          <p className="text-orange-600 dark:text-orange-300 text-center mb-4 max-w-md">
+            We're still loading your dependencies. This might be due to network conditions.
+            You can wait or try refreshing.
+          </p>
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            className="text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700"
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
-      <div>
-        <div className="flex items-center justify-between">
+      <div id="dependencies-header" className="space-y-4">
+        {/* Title Row */}
+        <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Service Dependencies</h1>
             <p className="text-muted-foreground mt-1">
@@ -198,67 +495,110 @@ export default function DependenciesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Demo Mode Toggle */}
+            <DemoModeInlineToggle
+              enabled={demoMode}
+              onToggle={toggleDemoMode}
+            />
+            <TourButton onStartTour={startTour} variant="icon" />
             <Button
+              id="keyboard-shortcuts-button"
               variant="ghost"
               size="sm"
               onClick={() => setShowShortcuts(true)}
               className="text-muted-foreground hover:text-foreground"
+              aria-label="Show keyboard shortcuts"
+              aria-haspopup="dialog"
             >
-              <Command className="h-4 w-4 mr-2" />
+              <Command className="h-4 w-4 mr-2" aria-hidden="true" />
               Shortcuts
             </Button>
-            <ExportMenu
-              ref={exportButtonRef}
-              dependencies={displayedDependencies}
-              cycles={cycles}
-              graphRef={graphRef}
-              activeTab={activeTab}
-            />
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <div id="export-menu">
+              <ExportMenu
+                ref={exportButtonRef}
+                dependencies={filteredDisplayDependencies}
+                cycles={displayCycles}
+                graphRef={graphRef}
+                activeTab={activeTab}
+              />
+            </div>
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              aria-label="Add new dependency"
+              aria-haspopup="dialog"
+            >
+              <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
               Add Dependency
             </Button>
           </div>
         </div>
+
+        {/* Trust Indicators Row */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <SystemStatusBadge />
+          <DataFreshnessIndicator
+            lastSynced={lastSynced}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+          <SecurityBadge />
+          <div className="h-4 w-px bg-border" />
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+            </span>
+            Real-time sync active
+          </div>
+        </div>
+
+        {/* Sync Health Status (conditional) */}
+        <SyncHealthStatus
+          status={syncHealthStatus}
+          onResolve={handleRefresh}
+        />
       </div>
 
+      {/* Demo Mode Banner */}
+      {demoMode && (
+        <DemoModeBanner onExit={disableDemoMode} />
+      )}
+
+      {/* Sync Status Banner */}
+      <SyncStatusBanner
+        lastSynced={lastSynced}
+        status={syncStatus}
+        onRetry={handleRefresh}
+      />
+
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard
-          label="Total Dependencies"
-          value={stats.total}
-          icon={Network}
-        />
-        <StatCard
-          label="Critical Path"
-          value={stats.critical}
-          icon={AlertTriangle}
-          variant={stats.critical > 0 ? 'warning' : 'default'}
-        />
-        <StatCard
-          label="Runtime Dependencies"
-          value={stats.byType.runtime}
-          icon={Activity}
-        />
-        <StatCard
-          label="Circular Cycles"
-          value={cycles.length}
-          icon={AlertTriangle}
-          variant={cycles.length > 0 ? 'destructive' : 'default'}
-        />
+      <div id="stats-cards" className={`grid gap-4 md:grid-cols-4 ${demoMode ? 'relative' : ''}`}>
+        {statsWithTrends.map((stat) => (
+          <div
+            key={stat.label}
+            className={demoMode ? 'ring-2 ring-purple-200 dark:ring-purple-800 rounded-lg' : ''}
+          >
+            <StatCardWithTrend
+              stat={stat}
+              loading={isLoading}
+              lastUpdated={lastSynced}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Circular Dependency Alert */}
-      {cycles.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
+      {displayCycles.length > 0 && (
+        <Alert variant="destructive" role="alert" aria-live="polite">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>
-            <strong>Warning:</strong> {cycles.length} circular dependency cycle{cycles.length > 1 ? 's' : ''} detected.
+            <strong>Warning:</strong> {displayCycles.length} circular dependency cycle{displayCycles.length > 1 ? 's' : ''} detected.
             This can cause deployment issues and runtime failures.
             {' '}
             <button
-              onClick={() => setActiveTab('list')}
+              onClick={() => handleViewChange('list')}
               className="underline font-semibold"
+              aria-label={`View ${displayCycles.length} circular dependency cycles in list view`}
             >
               View details
             </button>
@@ -268,24 +608,28 @@ export default function DependenciesPage() {
 
       {/* Search and Filters */}
       <div className="space-y-3">
-        <DependencySearch
-          ref={searchRef}
-          query={query}
-          onQueryChange={setQuery}
-          resultsCount={displayedDependencies.length}
-          totalCount={dependencies.length}
-          isSearching={isSearching}
-          onClear={clearSearch}
-          hasActiveFilters={activeFilterCount > 0}
-        />
+        <div id="search-bar">
+          <DependencySearch
+            ref={searchRef}
+            query={query}
+            onQueryChange={setQuery}
+            resultsCount={filteredDisplayDependencies.length}
+            totalCount={displayDependencies.length}
+            isSearching={isSearching}
+            onClear={clearSearch}
+            hasActiveFilters={activeFilterCount > 0}
+          />
+        </div>
 
-        <DependencyFilters
-          ref={filtersRef}
-          filters={filters}
-          onFilterChange={setFilter}
-          onClearFilters={clearFilters}
-          activeCount={activeFilterCount}
-        />
+        <div id="filter-controls">
+          <DependencyFilters
+            ref={filtersRef}
+            filters={filters}
+            onFilterChange={setFilter}
+            onClearFilters={clearFilters}
+            activeCount={activeFilterCount}
+          />
+        </div>
 
         {activeFilterCount > 0 && (
           <FilterSummary filters={filters} onRemoveFilter={setFilter} />
@@ -293,30 +637,40 @@ export default function DependenciesPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="graph">
-            <Network className="h-4 w-4 mr-2" />
+      <Tabs value={activeTab} onValueChange={handleViewChange} className="space-y-4">
+        <TabsList id="view-tabs" aria-label="Dependency view options">
+          <TabsTrigger value="graph" aria-label="Graph View - Visual dependency map">
+            <Network className="h-4 w-4 mr-2" aria-hidden="true" />
             Graph View
           </TabsTrigger>
-          <TabsTrigger value="list">
-            <List className="h-4 w-4 mr-2" />
+          <TabsTrigger value="list" aria-label="List View - Tabular dependency list">
+            <List className="h-4 w-4 mr-2" aria-hidden="true" />
             List View
           </TabsTrigger>
-          <TabsTrigger value="impact">
-            <Activity className="h-4 w-4 mr-2" />
+          <TabsTrigger value="impact" aria-label="Impact Analysis - Change impact assessment">
+            <Activity className="h-4 w-4 mr-2" aria-hidden="true" />
             Impact Analysis
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="graph" className="space-y-4">
-          <DependencyGraph onRefresh={refetch} graphRef={graphRef} />
+          <div className={demoMode ? 'relative' : ''}>
+            {demoMode && (
+              <div className="absolute top-3 right-3 z-10">
+                <span className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                  <Play className="w-3 h-3" />
+                  Demo Data
+                </span>
+              </div>
+            )}
+            <DependencyGraph onRefresh={refetch} graphRef={graphRef} demoMode={demoMode} />
+          </div>
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4">
           <DependencyList
-            dependencies={displayedDependencies}
-            cycles={cycles}
+            dependencies={filteredDisplayDependencies}
+            cycles={displayCycles}
             isLoading={isLoading}
             onRefresh={refetch}
             searchQuery={query}
@@ -325,7 +679,7 @@ export default function DependenciesPage() {
         </TabsContent>
 
         <TabsContent value="impact" className="space-y-4">
-          <ImpactAnalysisView />
+          <ImpactAnalysisView demoMode={demoMode} />
         </TabsContent>
       </Tabs>
 
@@ -344,37 +698,12 @@ export default function DependenciesPage() {
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
-    </div>
-  )
-}
 
-// Stats Card Component
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  variant = 'default',
-}: {
-  label: string
-  value: number
-  icon: any
-  variant?: 'default' | 'warning' | 'destructive'
-}) {
-  const variantStyles = {
-    default: 'border-border',
-    warning: 'border-orange-200 bg-orange-50',
-    destructive: 'border-red-200 bg-red-50',
-  }
-
-  return (
-    <div className={`border rounded-lg p-4 ${variantStyles[variant]}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
-        </div>
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </div>
+      {/* Welcome Modal */}
+      <WelcomeModal
+        onStartTour={startTour}
+        onDismiss={() => {}}
+      />
     </div>
   )
 }

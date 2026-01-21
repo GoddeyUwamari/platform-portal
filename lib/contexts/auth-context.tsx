@@ -142,6 +142,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         tokenManager.setAccessToken(response.data.accessToken);
         tokenManager.setRefreshToken(response.data.refreshToken);
         tokenManager.setUser(response.data.user);
+        tokenManager.setAuthCookie(response.data.accessToken);
 
         // Update state with user and organization from login response
         console.log("✅ Login successful, user:", response.data.user);
@@ -162,8 +163,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           description: `Logged in as ${response.data.user.email}`,
         });
 
-        // Redirect to dashboard
-        router.push("/dashboard");
+        // Redirect to dashboard with fallback
+        console.log("🚀 Redirecting to dashboard...");
+        try {
+          // Use Next.js router for client-side navigation
+          await router.push("/dashboard");
+
+          // Fallback: Force navigation if router.push doesn't work
+          setTimeout(() => {
+            if (window.location.pathname === "/login") {
+              console.log("⚠️ Router redirect failed, using window.location");
+              window.location.href = "/dashboard";
+            }
+          }, 100);
+        } catch (error) {
+          console.error("❌ Router navigation failed, using window.location:", error);
+          window.location.href = "/dashboard";
+        }
       } catch (error: any) {
         console.error("Login failed:", error);
         const message =
@@ -198,6 +214,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           tokenManager.setAccessToken(response.data.accessToken);
           tokenManager.setRefreshToken(response.data.refreshToken);
           tokenManager.setUser(response.data.user);
+          tokenManager.setAuthCookie(response.data.accessToken);
 
           // Update state
           setUser(response.data.user);
@@ -212,8 +229,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
             description: "Welcome to DevControl",
           });
 
-          // Redirect to dashboard
-          router.push("/dashboard");
+          // Redirect to dashboard with fallback
+          console.log("🚀 Redirecting to dashboard...");
+          try {
+            await router.push("/dashboard");
+
+            // Fallback: Force navigation if router.push doesn't work
+            setTimeout(() => {
+              if (window.location.pathname !== "/dashboard") {
+                console.log("⚠️ Router redirect failed, using window.location");
+                window.location.href = "/dashboard";
+              }
+            }, 100);
+          } catch (error) {
+            console.error("❌ Router navigation failed, using window.location:", error);
+            window.location.href = "/dashboard";
+          }
         } else {
           // Older backend that doesn't return tokens on registration
           toast.success("Account created successfully!", {
@@ -248,6 +279,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       // Clear local state
       tokenManager.clearAll();
+      tokenManager.clearAuthCookie();
       setUser(null);
       setOrganization(null);
       setOrganizations([]);

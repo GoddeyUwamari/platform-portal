@@ -33,7 +33,7 @@ export function FinalCTA() {
         <div className="mb-6 flex justify-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium">
             <Sparkles className="h-4 w-4" />
-            <span>Join 500+ engineering teams</span>
+            <span>Start saving on AWS costs today</span>
           </div>
         </div>
 
@@ -87,16 +87,20 @@ export function FinalCTA() {
 
         {/* Additional trust elements */}
         <div className="mt-12 pt-8 border-t border-white/20">
-          <p className="text-blue-100 text-sm mb-4">Trusted by engineering teams at</p>
-          <div className="flex flex-wrap items-center justify-center gap-8 opacity-70">
-            {['TechCorp', 'DataFlow', 'CloudScale', 'DevOps Inc'].map((company, i) => (
-              <div
-                key={i}
-                className="px-6 py-2 bg-white/10 backdrop-blur-sm rounded-lg text-white font-semibold"
-              >
-                {company}
-              </div>
-            ))}
+          <p className="text-blue-100 text-sm mb-4">Trusted by engineering teams from startups to Fortune 500</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-white/80 text-sm">
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              <span>Enterprise Security</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              <span>Read-Only Access</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              <span>99.9% Uptime SLA</span>
+            </div>
           </div>
         </div>
       </div>

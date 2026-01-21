@@ -4,7 +4,7 @@ import { PricingTier } from '@/types/billing';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, ArrowRight, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { createCheckoutSession } from '@/lib/services/stripe.service';
 import { toast } from 'sonner';
@@ -15,11 +15,33 @@ interface PricingCardProps {
   billingPeriod?: 'monthly' | 'annual';
 }
 
+// Tier-specific subtitles and ideal for descriptions
+const tierSubtitles: Record<string, { subtitle: string; idealFor: string; roiNote?: string }> = {
+  free: {
+    subtitle: 'Perfect for side projects',
+    idealFor: 'Individual developers & MVPs',
+  },
+  starter: {
+    subtitle: 'Best for growing startups',
+    idealFor: 'Teams with $5K-15K monthly AWS spend',
+  },
+  pro: {
+    subtitle: 'For scaling engineering teams',
+    idealFor: 'Teams with $15K-75K monthly AWS spend',
+    roiNote: 'Typical ROI: Save $2,400/mo = 8x return',
+  },
+  enterprise: {
+    subtitle: 'For large organizations',
+    idealFor: '100+ team members, $75K+ AWS spend',
+  },
+};
+
 export function PricingCard({ tier, currentTier, billingPeriod = 'monthly' }: PricingCardProps) {
   const [loading, setLoading] = useState(false);
 
   const displayPrice = billingPeriod === 'annual' && tier.annualPrice !== undefined ? tier.annualPrice : tier.price;
   const priceId = billingPeriod === 'annual' && tier.annualPriceId ? tier.annualPriceId : tier.priceId;
+  const tierInfo = tierSubtitles[tier.tier] || { subtitle: '', idealFor: '' };
 
   const handleCheckout = async () => {
     if (tier.tier === 'free') {
@@ -57,13 +79,13 @@ export function PricingCard({ tier, currentTier, billingPeriod = 'monthly' }: Pr
   };
 
   const isCurrentPlan = currentTier === tier.tier;
-  const ctaText = tier.cta || (tier.tier === 'free' ? 'Get Started Free' : tier.tier === 'enterprise' ? 'Contact Sales' : 'Start Free Trial');
+  const ctaText = tier.cta || (tier.tier === 'free' ? 'Start Free Forever' : tier.tier === 'enterprise' ? 'Schedule Demo' : 'Start 14-Day Free Trial');
 
   return (
     <Card
-      className={`relative flex flex-col transition-all duration-300 ${
+      className={`relative flex flex-col transition-all duration-300 w-full ${
         tier.popular
-          ? 'border-2 border-primary shadow-2xl scale-[1.02] hover:scale-[1.04]'
+          ? 'border-2 border-primary shadow-2xl scale-[1.02] hover:scale-[1.04] ring-1 ring-primary/20'
           : 'border hover:shadow-lg hover:scale-[1.02]'
       }`}
     >
@@ -75,9 +97,12 @@ export function PricingCard({ tier, currentTier, billingPeriod = 'monthly' }: Pr
         </div>
       )}
 
-      <CardHeader className="text-center pb-8 pt-8">
-        <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
-        <div className="mb-2">
+      <CardHeader className="text-center pb-6 pt-8">
+        <h3 className="text-2xl font-bold mb-1">{tier.name}</h3>
+        {tierInfo.subtitle && (
+          <p className="text-sm text-muted-foreground mb-4">{tierInfo.subtitle}</p>
+        )}
+        <div className="mb-3">
           {tier.tier === 'enterprise' && (
             <div className="text-sm text-muted-foreground font-normal mb-1">Starting at</div>
           )}
@@ -92,7 +117,14 @@ export function PricingCard({ tier, currentTier, billingPeriod = 'monthly' }: Pr
           </p>
         )}
         {tier.trialDays && tier.tier !== 'free' && (
-          <p className="text-sm text-muted-foreground mt-1">{tier.trialDays}-day free trial</p>
+          <p className="text-sm text-muted-foreground mt-2">{tier.trialDays}-day free trial</p>
+        )}
+        {tierInfo.idealFor && (
+          <div className="mt-3 px-3 py-2 bg-muted/50 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium">Ideal for:</span> {tierInfo.idealFor}
+            </p>
+          </div>
         )}
       </CardHeader>
 
@@ -149,19 +181,43 @@ export function PricingCard({ tier, currentTier, billingPeriod = 'monthly' }: Pr
         )}
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex-col gap-3">
         <Button
-          className="w-full"
+          className={`w-full ${tier.popular ? 'bg-gradient-to-r from-[#635BFF] to-[#4f46e5] hover:from-[#5851ea] hover:to-[#4338ca]' : ''}`}
           onClick={handleCheckout}
           disabled={loading || isCurrentPlan}
           variant={tier.popular ? 'default' : 'outline'}
+          size="lg"
         >
-          {loading
-            ? 'Loading...'
-            : isCurrentPlan
-            ? 'Current Plan'
-            : ctaText}
+          {loading ? (
+            'Loading...'
+          ) : isCurrentPlan ? (
+            'Current Plan'
+          ) : (
+            <>
+              {ctaText}
+              {tier.tier !== 'free' && <ArrowRight className="ml-2 h-4 w-4" />}
+            </>
+          )}
         </Button>
+        {tier.tier !== 'free' && tier.tier !== 'enterprise' && !isCurrentPlan && (
+          <p className="text-xs text-muted-foreground text-center">
+            No credit card required
+          </p>
+        )}
+        {tier.tier === 'enterprise' && !isCurrentPlan && (
+          <p className="text-xs text-muted-foreground text-center">
+            Custom pricing & implementation
+          </p>
+        )}
+        {tierInfo.roiNote && (
+          <div className="w-full mt-2 p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-400 text-center font-medium flex items-center justify-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              {tierInfo.roiNote}
+            </p>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

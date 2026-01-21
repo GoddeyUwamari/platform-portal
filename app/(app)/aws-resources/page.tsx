@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign, Tags, TrendingUp, Download, Ticket, Zap, Lightbulb } from 'lucide-react';
+import { Database, RefreshCw, Search, Server, Cloud, HardDrive, AlertTriangle, Shield, DollarSign, Tags, TrendingUp, Download, Ticket, Zap, Lightbulb, Activity } from 'lucide-react';
 import { EmptyState } from '@/components/onboarding/empty-state';
 import { AWSResourcesEmptyState } from '@/components/aws-resources/AWSResourcesEmptyState';
 import { useDemoMode } from '@/components/demo/demo-mode-toggle';
 import { useSubscription } from '@/lib/hooks/useSubscription';
+import { LastSynced } from '@/components/ui/last-synced';
+import { SyncStatusBanner } from '@/components/ui/sync-status-banner';
 import { UpgradePrompt } from '@/components/billing/upgrade-prompt';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { awsResourcesService, ResourceFilters } from '@/lib/services/aws-resources.service';
+import { getErrorMessage } from '@/lib/utils/retry';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -52,6 +56,8 @@ export default function AWSResourcesPage() {
   const [isAssignToTeamDialogOpen, setIsAssignToTeamDialogOpen] = useState(false);
   const [isAssignToServiceDialogOpen, setIsAssignToServiceDialogOpen] = useState(false);
   const [isSetEnvironmentDialogOpen, setIsSetEnvironmentDialogOpen] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date>(new Date());
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'synced' | 'error'>('synced');
 
   // Fetch resources
   const { data: resourcesData = { resources: [], total: 0 }, isLoading: resourcesLoading } = useQuery({
@@ -87,18 +93,10 @@ export default function AWSResourcesPage() {
   // Discovery mutation
   const discoveryMutation = useMutation({
     mutationFn: async () => {
-      console.log('🚀 Calling awsResourcesService.discover()...');
-      try {
-        const result = await awsResourcesService.discover();
-        console.log('✅ Discovery API call successful:', result);
-        return result;
-      } catch (error) {
-        console.error('❌ Discovery API call failed:', error);
-        throw error;
-      }
+      const result = await awsResourcesService.discover();
+      return result;
     },
-    onSuccess: (data) => {
-      console.log('🎉 Discovery mutation onSuccess triggered:', data);
+    onSuccess: () => {
       toast.success('Resource discovery started', {
         description: 'AWS resources are being scanned. This may take a few minutes.',
       });
@@ -109,21 +107,53 @@ export default function AWSResourcesPage() {
       }, 10000);
     },
     onError: (error: any) => {
-      console.error('💥 Discovery mutation onError triggered:', error);
+      console.error('Discovery failed:', error);
+
+      // User-friendly error messages based on error type
+      let errorMessage = 'Failed to start resource discovery';
+
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Discovery timed out. Please try again in a moment.';
+        } else if (error.message.includes('credentials') || error.message.includes('unauthorized')) {
+          errorMessage = 'AWS credentials invalid. Please check your configuration.';
+        } else if (error.message.includes('rate limit')) {
+          errorMessage = 'Too many requests. Please wait a moment and try again.';
+        } else if (error.message.includes('network') || error.message.includes('ECONNREFUSED')) {
+          errorMessage = 'Unable to connect. Please check your internet connection.';
+        } else {
+          errorMessage = getErrorMessage(error);
+        }
+      }
+
       toast.error('Discovery failed', {
-        description: error.message || 'Failed to start resource discovery',
+        description: errorMessage,
       });
     },
   });
 
   const handleDiscovery = () => {
-    console.log('🔍 Discovery button clicked');
-    console.log('🔍 Mutation state:', { isPending: discoveryMutation.isPending, isError: discoveryMutation.isError });
+    discoveryMutation.mutate();
+  };
+
+  const handleRefresh = async () => {
+    setSyncStatus('syncing');
     try {
-      discoveryMutation.mutate();
-      console.log('🔍 Mutation triggered successfully');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['aws-resources'] }),
+        queryClient.invalidateQueries({ queryKey: ['aws-resources-stats'] }),
+      ]);
+      setLastSynced(new Date());
+      setSyncStatus('synced');
+      toast.success('Resources refreshed');
     } catch (error) {
-      console.error('🔍 Error triggering mutation:', error);
+      console.error('Refresh failed:', error);
+      setSyncStatus('error');
+
+      const errorMessage = error instanceof Error ? getErrorMessage(error) : 'Failed to refresh resources';
+      toast.error('Refresh failed', {
+        description: errorMessage,
+      });
     }
   };
 
@@ -188,11 +218,30 @@ export default function AWSResourcesPage() {
   const hasMoreResources = allResources.length > maxResourcesToShow;
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <ErrorBoundary>
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Demo Mode Indicator */}
+      {demoMode && (
+        <div className="bg-purple-600 text-white px-4 py-3 rounded-lg text-center font-medium -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 mb-0">
+          <div className="flex items-center justify-center gap-2">
+            <Activity className="w-4 h-4 animate-pulse" />
+            <span>Demo Mode Active - Showing sample AWS resource data</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">AWS Resource Inventory</h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">AWS Resource Inventory</h1>
+            <LastSynced
+              timestamp={stats?.last_sync_at || lastSynced}
+              onRefresh={handleRefresh}
+              autoRefresh={true}
+              size="sm"
+            />
+          </div>
           <p className="text-muted-foreground mt-1">
             Discover, track, and monitor AWS resources with compliance scanning
           </p>
@@ -241,12 +290,6 @@ export default function AWSResourcesPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Resources</CardTitle>
             <div className="flex items-center gap-2">
-              {!statsLoading && stats && stats.total_resources > 0 && (
-                <div className="flex items-center gap-1 text-xs">
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                  <span className="text-green-600 font-medium">+2</span>
-                </div>
-              )}
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Database className="h-5 w-5 text-blue-600" />
               </div>
@@ -261,11 +304,6 @@ export default function AWSResourcesPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Across all regions
                 </p>
-                {stats && stats.total_resources > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Last updated: 2 min ago
-                  </p>
-                )}
               </>
             )}
           </CardContent>
@@ -276,11 +314,6 @@ export default function AWSResourcesPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
             <div className="flex items-center gap-2">
-              {!statsLoading && stats && stats.total_monthly_cost > 0 && (
-                <div className="text-xs">
-                  <span className="text-orange-600 font-medium">↗ +12%</span>
-                </div>
-              )}
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
@@ -297,11 +330,6 @@ export default function AWSResourcesPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Estimated for current month
                 </p>
-                {stats && stats.total_monthly_cost > 0 && (
-                  <button className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                    View cost breakdown →
-                  </button>
-                )}
               </>
             )}
           </CardContent>
@@ -354,11 +382,6 @@ export default function AWSResourcesPage() {
                     </>
                   )}
                 </div>
-                {stats?.compliance_stats?.total_issues > 0 && (
-                  <button className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                    Fix compliance issues →
-                  </button>
-                )}
               </>
             )}
           </CardContent>
@@ -391,14 +414,9 @@ export default function AWSResourcesPage() {
                   {stats?.unencrypted_count || 0} unencrypted, {stats?.public_count || 0} public
                 </p>
                 {((stats?.unencrypted_count || 0) + (stats?.public_count || 0)) > 0 && (
-                  <>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Requires immediate attention
-                    </p>
-                    <button className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium">
-                      Review security risks →
-                    </button>
-                  </>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Requires immediate attention
+                  </p>
                 )}
               </>
             )}
@@ -523,18 +541,13 @@ export default function AWSResourcesPage() {
       {/* Quick Insights Section - NEW */}
       {resources.length > 0 && stats && !statsLoading && (
         <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Lightbulb className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Quick Insights
-              </h3>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Lightbulb className="w-5 h-5 text-blue-600" />
             </div>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              View all insights →
-            </button>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Quick Insights
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -547,10 +560,10 @@ export default function AWSResourcesPage() {
                 </span>
               </div>
               <div className="text-2xl font-bold text-green-600 mb-1">
-                ${(stats.orphaned_savings || 127).toFixed(0)}/mo
+                {stats.orphaned_savings > 0 ? `$${stats.orphaned_savings.toFixed(0)}/mo` : '$0/mo'}
               </div>
               <p className="text-xs text-gray-600">
-                {stats.orphaned_count || 2} idle resources detected
+                {stats.orphaned_count || 0} idle resources detected
               </p>
             </div>
 
@@ -937,7 +950,7 @@ export default function AWSResourcesPage() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : (demoMode || resources.length === 0) ? (
+          ) : (!demoMode && resources.length === 0) ? (
             <AWSResourcesEmptyState />
           ) : (
             <div className="overflow-x-auto rounded-md border">
@@ -1185,6 +1198,7 @@ export default function AWSResourcesPage() {
           queryClient.invalidateQueries({ queryKey: ['aws-resources-cost-by-environment'] });
         }}
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

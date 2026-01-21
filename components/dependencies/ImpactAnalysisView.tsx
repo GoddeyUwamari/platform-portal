@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, ArrowDown, ArrowUp, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -14,22 +14,40 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { servicesService } from '@/lib/services/services.service'
 import { dependenciesService } from '@/lib/services/dependencies.service'
+import { DEMO_SERVICES_LIST, DEMO_SERVICE_IMPACTS, DEMO_IMPACT_ANALYSIS } from '@/lib/demo/demo-dependencies'
 
-export function ImpactAnalysisView() {
+interface ImpactAnalysisViewProps {
+  demoMode?: boolean
+}
+
+export function ImpactAnalysisView({ demoMode = false }: ImpactAnalysisViewProps) {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
 
-  // Fetch services for dropdown
+  // Fetch services for dropdown (skip in demo mode)
   const { data: services = [] } = useQuery({
     queryKey: ['services'],
     queryFn: () => servicesService.getAll(),
+    enabled: !demoMode,
   })
 
-  // Fetch impact analysis
-  const { data: analysis, isLoading } = useQuery({
+  // Fetch impact analysis (skip in demo mode)
+  const { data: realAnalysis, isLoading } = useQuery({
     queryKey: ['dependencies', 'impact', selectedServiceId],
     queryFn: () => dependenciesService.getImpactAnalysis(selectedServiceId!),
-    enabled: !!selectedServiceId,
+    enabled: !!selectedServiceId && !demoMode,
   })
+
+  // Get the appropriate services list
+  const displayServices = demoMode ? DEMO_SERVICES_LIST : services
+
+  // Get the appropriate analysis data
+  const analysis = useMemo(() => {
+    if (!selectedServiceId) return null
+    if (demoMode) {
+      return DEMO_SERVICE_IMPACTS[selectedServiceId] || DEMO_IMPACT_ANALYSIS
+    }
+    return realAnalysis
+  }, [selectedServiceId, demoMode, realAnalysis])
 
   return (
     <div className="space-y-6">
@@ -44,9 +62,9 @@ export function ImpactAnalysisView() {
               <SelectValue placeholder="Choose a service..." />
             </SelectTrigger>
             <SelectContent>
-              {services.map((service) => (
+              {displayServices.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
-                  {service.name} ({service.template})
+                  {service.name}
                 </SelectItem>
               ))}
             </SelectContent>

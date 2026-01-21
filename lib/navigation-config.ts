@@ -46,8 +46,12 @@ export interface NavGroup {
   items?: NavItem[];
 }
 
-// Platform Navigation (consolidates existing links)
-export const platformNav: NavGroup = {
+// ============================================================
+// APP NAVIGATION (Authenticated Users Only)
+// ============================================================
+
+// App Navigation - shown in authenticated TopNav
+export const appNav: NavGroup = {
   label: 'Platform',
   sections: [
     {
@@ -111,7 +115,14 @@ export const platformNav: NavGroup = {
   ],
 };
 
-// Solutions Navigation (new - placeholders)
+// Legacy alias for backward compatibility
+export const platformNav = appNav;
+
+// ============================================================
+// MARKETING NAVIGATION (Public Pages Only)
+// ============================================================
+
+// Solutions Navigation - marketing content
 export const solutionsNav: NavGroup = {
   label: 'Solutions',
   sections: [
@@ -207,8 +218,8 @@ export const resourcesNav: NavGroup = {
   ],
 };
 
-// Standalone Links (no dropdown)
-export const standaloneLinks: NavItem[] = [
+// Marketing Standalone Links (shown in marketing nav only)
+export const marketingStandaloneLinks: NavItem[] = [
   {
     label: 'Pricing',
     href: '/pricing',
@@ -222,6 +233,9 @@ export const standaloneLinks: NavItem[] = [
     href: '/developers',
   },
 ];
+
+// Legacy alias (DO NOT USE in TopNav - this is for marketing only)
+export const standaloneLinks = marketingStandaloneLinks;
 
 // User Dropdown Navigation (enhanced version)
 export const userNavSections: NavSection[] = [

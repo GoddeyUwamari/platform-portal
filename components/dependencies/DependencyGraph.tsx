@@ -17,6 +17,7 @@ import 'reactflow/dist/style.css'
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { dependenciesService } from '@/lib/services/dependencies.service'
+import { DEMO_DEPENDENCY_GRAPH } from '@/lib/demo/demo-dependencies'
 
 // Simple layout algorithm (dagre requires complex setup, using grid for now)
 const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
@@ -39,25 +40,30 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
 interface DependencyGraphProps {
   onRefresh: () => void
   graphRef?: React.RefObject<HTMLDivElement>
+  demoMode?: boolean
 }
 
-export function DependencyGraph({ onRefresh, graphRef }: DependencyGraphProps) {
+export function DependencyGraph({ onRefresh, graphRef, demoMode = false }: DependencyGraphProps) {
   const internalRef = useRef<HTMLDivElement>(null)
   const activeRef = graphRef || internalRef
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
 
-  // Fetch graph data
+  // Fetch graph data (skip if demo mode)
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['dependencies', 'graph'],
     queryFn: () => dependenciesService.getGraph(),
+    enabled: !demoMode,
   })
+
+  // Use demo data or real data
+  const graphData = demoMode ? DEMO_DEPENDENCY_GRAPH : data
 
   // Update nodes and edges when data changes
   useEffect(() => {
-    if (data) {
+    if (graphData) {
       // Transform edges with styling
-      const transformedEdges = data.edges.map((edge) => ({
+      const transformedEdges = graphData.edges.map((edge) => ({
         ...edge,
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -75,21 +81,22 @@ export function DependencyGraph({ onRefresh, graphRef }: DependencyGraphProps) {
 
       // Apply layout
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        data.nodes,
+        graphData.nodes,
         transformedEdges
       )
 
       setNodes(layoutedNodes)
       setEdges(layoutedEdges)
     }
-  }, [data, setNodes, setEdges])
+  }, [graphData, setNodes, setEdges])
 
   const handleRefresh = () => {
     refetch()
     onRefresh()
   }
 
-  if (isLoading) {
+  // Skip loading state if demo mode (demo data is instantly available)
+  if (isLoading && !demoMode) {
     return (
       <div className="flex items-center justify-center h-[600px] border rounded-lg">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -97,7 +104,8 @@ export function DependencyGraph({ onRefresh, graphRef }: DependencyGraphProps) {
     )
   }
 
-  if (error) {
+  // Skip error state if demo mode
+  if (error && !demoMode) {
     return (
       <div className="flex flex-col items-center justify-center h-[600px] border rounded-lg space-y-4">
         <AlertCircle className="h-8 w-8 text-red-600" />
@@ -113,7 +121,8 @@ export function DependencyGraph({ onRefresh, graphRef }: DependencyGraphProps) {
     )
   }
 
-  if (!nodes.length) {
+  // Only show empty state when not in demo mode and no nodes
+  if (!nodes.length && !demoMode) {
     return (
       <div className="flex flex-col items-center justify-center h-[600px] border rounded-lg space-y-4">
         <Network className="h-12 w-12 text-muted-foreground" />

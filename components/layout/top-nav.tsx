@@ -26,10 +26,10 @@ import { UserDropdown } from '@/components/ui/user-dropdown';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/contexts/auth-context';
 import {
-  platformNav,
+  appNav,
   solutionsNav,
   resourcesNav,
-  standaloneLinks,
+  marketingStandaloneLinks,
   quickActions,
 } from '@/lib/navigation-config';
 import { useState } from 'react';
@@ -92,14 +92,19 @@ export function TopNav() {
             <span className="hidden lg:inline-block text-xl">DevControl</span>
           </Link>
 
-          {/* Desktop Navigation Dropdowns */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-0.5">
-            <NavDropdown group={platformNav} />
+            {/* Platform Dropdown */}
+            <NavDropdown group={appNav} />
+
+            {/* Solutions Dropdown */}
             <NavDropdown group={solutionsNav} />
+
+            {/* Resources Dropdown */}
             <NavDropdown group={resourcesNav} />
 
-            {/* Standalone Links */}
-            {standaloneLinks.map((link) => {
+            {/* Standalone Links - Pricing, Enterprise, Developers */}
+            {marketingStandaloneLinks.map((link) => {
               const isActive =
                 pathname === link.href || pathname.startsWith(link.href + '/');
               return (
@@ -212,7 +217,7 @@ export function TopNav() {
                 Platform
               </div>
               <div className="space-y-1">
-                {platformNav.sections?.map((section) =>
+                {appNav.sections?.map((section) =>
                   section.items.map((item) => {
                     const isActive =
                       pathname === item.href ||
@@ -253,12 +258,13 @@ export function TopNav() {
                     const isActive =
                       pathname === item.href ||
                       pathname.startsWith(item.href + '/');
+                    const Icon = item.icon;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
                         className={cn(
-                          'block px-3 py-2 text-sm rounded-md transition-colors',
+                          'flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors',
                           'hover:bg-accent',
                           isActive
                             ? 'bg-accent text-foreground'
@@ -266,6 +272,7 @@ export function TopNav() {
                         )}
                         onClick={() => setMobileMenuOpen(false)}
                       >
+                        {Icon && <Icon className="w-4 h-4" />}
                         {item.label}
                       </Link>
                     );
@@ -286,12 +293,13 @@ export function TopNav() {
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(item.href + '/');
+                  const Icon = item.icon;
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        'block px-3 py-2 text-sm rounded-md transition-colors',
+                        'flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors',
                         'hover:bg-accent',
                         isActive
                           ? 'bg-accent text-foreground'
@@ -299,6 +307,7 @@ export function TopNav() {
                       )}
                       onClick={() => setMobileMenuOpen(false)}
                     >
+                      {Icon && <Icon className="w-4 h-4" />}
                       {item.label}
                     </Link>
                   );
@@ -308,20 +317,23 @@ export function TopNav() {
 
             <DropdownMenuSeparator />
 
-            {/* Pricing */}
-            <Link
-              href="/pricing"
-              className={cn(
-                'block px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                'hover:bg-accent',
-                pathname === '/pricing'
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground'
-              )}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
+            {/* Standalone Links - Pricing, Enterprise, Developers */}
+            {marketingStandaloneLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'block px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                  'hover:bg-accent',
+                  pathname === link.href
+                    ? 'bg-accent text-foreground'
+                    : 'text-muted-foreground'
+                )}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       )}
