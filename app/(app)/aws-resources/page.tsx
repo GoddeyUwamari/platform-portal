@@ -37,7 +37,9 @@ import { CreateTicketDialog } from '@/components/aws-resources/CreateTicketDialo
 import { AssignToTeamDialog } from '@/components/aws-resources/AssignToTeamDialog';
 import { AssignToServiceDialog } from '@/components/aws-resources/AssignToServiceDialog';
 import { SetEnvironmentDialog } from '@/components/aws-resources/SetEnvironmentDialog';
-import { CriticalIssuesBanner } from '@/components/aws-resources/CriticalIssuesBanner';
+import { SecurityInsightsBanner } from '@/components/aws/security-insights-banner';
+import { CostAttributionTeaser } from '@/components/aws/cost-attribution-teaser';
+import { SeverityBadge } from '@/components/ui/severity-badge';
 import { calculateRiskScore, calculateDaysExposed, calculateResourceRisk } from '@/lib/utils/riskScoring';
 
 export default function AWSResourcesPage() {
@@ -178,16 +180,6 @@ export default function AWSResourcesPage() {
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'default';
-    }
-  };
-
   const allResources = resourcesData?.resources || [];
   const total = resourcesData?.total || 0;
 
@@ -201,11 +193,6 @@ export default function AWSResourcesPage() {
     orphanedCount: stats.orphaned_count || 0,
   }) : null;
 
-  // Detect frameworks at risk
-  const frameworksAtRisk = stats && stats.compliance_stats?.total_issues > 0
-    ? ['SOC 2', 'HIPAA', 'PCI DSS'].filter((_, i) => i < Math.min(2, stats.compliance_stats.by_severity.critical + 1))
-    : [];
-
   // Apply resource limits for free users
   const maxResourcesToShow = subscription.maxResources === 'unlimited' ? allResources.length : subscription.maxResources;
 
@@ -216,6 +203,44 @@ export default function AWSResourcesPage() {
 
   const resources = sortedResources.slice(0, maxResourcesToShow);
   const hasMoreResources = allResources.length > maxResourcesToShow;
+
+  // Calculate consistent scores (0-100 scale)
+  const calculateSecurityScore = () => {
+    if (!stats) return 0;
+    const totalResources = stats.total_resources || 1;
+    const securityIssues = (stats.unencrypted_count || 0) + (stats.public_count || 0);
+    const score = Math.max(0, Math.round(((totalResources - securityIssues) / totalResources) * 100));
+    return score;
+  };
+
+  const calculateComplianceScore = () => {
+    if (!stats?.compliance_stats) return 100;
+    const totalResources = stats.total_resources || 1;
+    const complianceIssues = stats.compliance_stats.total_issues || 0;
+    const score = Math.max(0, Math.round(((totalResources - complianceIssues) / totalResources) * 100));
+    return score;
+  };
+
+  const calculateOverallHealthScore = () => {
+    if (!stats) return 0;
+    const securityScore = calculateSecurityScore();
+    const complianceScore = calculateComplianceScore();
+    // Average of security and compliance scores
+    return Math.round((securityScore + complianceScore) / 2);
+  };
+
+  const getScoreLevel = (score: number) => {
+    if (score >= 80) return { label: 'Excellent', color: 'text-green-600', bgColor: 'bg-green-100' };
+    if (score >= 60) return { label: 'Good', color: 'text-blue-600', bgColor: 'bg-blue-100' };
+    if (score >= 40) return { label: 'Fair', color: 'text-amber-600', bgColor: 'bg-amber-100' };
+    return { label: 'Needs Attention', color: 'text-orange-600', bgColor: 'bg-orange-100' };
+  };
+
+  const securityScore = calculateSecurityScore();
+  const complianceScore = calculateComplianceScore();
+  const overallHealthScore = calculateOverallHealthScore();
+  const securityLevel = getScoreLevel(securityScore);
+  const complianceLevel = getScoreLevel(complianceScore);
 
   return (
     <ErrorBoundary>
@@ -268,17 +293,17 @@ export default function AWSResourcesPage() {
         </div>
       </div>
 
-      {/* Critical Issues Banner */}
-      {stats && (stats.compliance_stats?.by_severity?.critical > 0 || stats.compliance_stats?.by_severity?.high > 0 || stats.public_count > 0) && (
-        <CriticalIssuesBanner
-          criticalCount={stats.compliance_stats?.by_severity?.critical || 0}
-          highCount={stats.compliance_stats?.by_severity?.high || 0}
-          publicCount={stats.public_count || 0}
-          unencryptedCount={stats.unencrypted_count || 0}
-          frameworksAtRisk={frameworksAtRisk}
-          onViewIssues={() => {
-            // Scroll to resources table
+      {/* Security Insights Banner */}
+      {stats && (stats.compliance_stats?.by_severity?.critical > 0 || stats.compliance_stats?.by_severity?.high > 0 || stats.public_count > 0 || stats.unencrypted_count > 0) && (
+        <SecurityInsightsBanner
+          criticalIssues={stats.compliance_stats?.by_severity?.critical || 0}
+          warnings={(stats.compliance_stats?.by_severity?.high || 0) + (stats.public_count || 0) + (stats.unencrypted_count || 0)}
+          recommendations={stats.compliance_stats?.by_severity?.medium || 1}
+          onViewDetails={() => {
             document.getElementById('resources-table')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          onDismiss={() => {
+            localStorage.setItem('aws-security-banner-dismissed', Date.now().toString());
           }}
         />
       )}
@@ -335,12 +360,12 @@ export default function AWSResourcesPage() {
           </CardContent>
         </Card>
 
-        {/* Compliance Issues Card */}
+        {/* Compliance Score Card */}
         <Card className={`hover:shadow-md transition-shadow ${!subscription.canViewCompliance ? 'relative' : ''}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compliance Issues</CardTitle>
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-purple-600" />
+            <CardTitle className="text-sm font-medium">Compliance Score</CardTitle>
+            <div className={`w-10 h-10 ${complianceLevel.bgColor} rounded-lg flex items-center justify-center`}>
+              <Shield className={`h-5 w-5 ${complianceLevel.color}`} />
             </div>
           </CardHeader>
           <CardContent>
@@ -348,58 +373,51 @@ export default function AWSResourcesPage() {
               <Skeleton className="h-8 w-16" />
             ) : !subscription.canViewCompliance ? (
               <>
-                <div className="text-2xl font-bold blur-sm select-none">12</div>
+                <div className="text-2xl font-bold blur-sm select-none">95/100</div>
                 <div className="mt-2">
                   <Badge variant="outline" className="text-xs">
                     Pro Feature
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Upgrade to scan for SOC 2, HIPAA, PCI compliance issues
+                  Upgrade to scan for SOC 2, HIPAA, PCI compliance
                 </p>
               </>
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {stats?.compliance_stats?.total_issues || 0}
+                  {complianceScore}/100
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats?.compliance_stats?.total_issues > 0 ? 'Impacts 3 resources' : 'All resources compliant'}
+                  {complianceLevel.label} — {stats?.compliance_stats?.total_issues || 0} {stats?.compliance_stats?.total_issues === 1 ? 'issue' : 'issues'}
                 </p>
-                <div className="flex gap-1 mt-2">
-                  {stats?.compliance_stats && (
-                    <>
-                      {stats.compliance_stats.by_severity.critical > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          {stats.compliance_stats.by_severity.critical} Critical
-                        </Badge>
-                      )}
-                      {stats.compliance_stats.by_severity.high > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          {stats.compliance_stats.by_severity.high} High
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </div>
+                {stats?.compliance_stats && stats.compliance_stats.total_issues > 0 && (
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {stats.compliance_stats.by_severity.critical > 0 && (
+                      <SeverityBadge
+                        severity="critical"
+                        label={`${stats.compliance_stats.by_severity.critical} Critical`}
+                      />
+                    )}
+                    {stats.compliance_stats.by_severity.high > 0 && (
+                      <SeverityBadge
+                        severity="high"
+                        label={`${stats.compliance_stats.by_severity.high} High`}
+                      />
+                    )}
+                  </div>
+                )}
               </>
             )}
           </CardContent>
         </Card>
 
-        {/* Security Risks Card */}
+        {/* Security Score Card */}
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Risks</CardTitle>
-            <div className="flex items-center gap-2">
-              {!statsLoading && stats && ((stats.unencrypted_count || 0) + (stats.public_count || 0)) > 0 && (
-                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                  HIGH
-                </span>
-              )}
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
+            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+            <div className={`w-10 h-10 ${securityLevel.bgColor} rounded-lg flex items-center justify-center`}>
+              <AlertTriangle className={`h-5 w-5 ${securityLevel.color}`} />
             </div>
           </CardHeader>
           <CardContent>
@@ -408,14 +426,14 @@ export default function AWSResourcesPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {(stats?.unencrypted_count || 0) + (stats?.public_count || 0)}
+                  {securityScore}/100
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats?.unencrypted_count || 0} unencrypted, {stats?.public_count || 0} public
+                  {securityLevel.label} — {(stats?.unencrypted_count || 0) + (stats?.public_count || 0)} {((stats?.unencrypted_count || 0) + (stats?.public_count || 0)) === 1 ? 'item' : 'items'} need review
                 </p>
                 {((stats?.unencrypted_count || 0) + (stats?.public_count || 0)) > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Requires immediate attention
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    {stats?.unencrypted_count || 0} unencrypted, {stats?.public_count || 0} public
                   </p>
                 )}
               </>
@@ -451,12 +469,12 @@ export default function AWSResourcesPage() {
                       variant="secondary"
                       className={`mb-1 ${
                         riskScore.grade === 'A' || riskScore.grade === 'B'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                           : riskScore.grade === 'C'
-                          ? 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                           : riskScore.grade === 'D'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-red-100 text-red-700'
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                          : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                       }`}
                     >
                       {riskScore.label}
@@ -466,10 +484,12 @@ export default function AWSResourcesPage() {
                     <div
                       className={`h-2 rounded-full ${
                         riskScore.score >= 80
-                          ? 'bg-green-600'
+                          ? 'bg-green-600 dark:bg-green-500'
                           : riskScore.score >= 60
-                          ? 'bg-yellow-600'
-                          : 'bg-red-600'
+                          ? 'bg-blue-600 dark:bg-blue-500'
+                          : riskScore.score >= 40
+                          ? 'bg-amber-600 dark:bg-amber-500'
+                          : 'bg-orange-600 dark:bg-orange-500'
                       }`}
                       style={{ width: `${riskScore.score}%` }}
                     />
@@ -538,68 +558,85 @@ export default function AWSResourcesPage() {
         />
       )}
 
-      {/* Quick Insights Section - NEW */}
+      {/* Quick Insights Section */}
       {resources.length > 0 && stats && !statsLoading && (
-        <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Lightbulb className="w-5 h-5 text-blue-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Quick Insights
-            </h3>
-          </div>
+        (() => {
+          const hasSavings = stats.orphaned_savings > 0;
+          const hasSecurityIssues = (stats.unencrypted_count || 0) + (stats.public_count || 0) > 0;
+          const healthLevel = getScoreLevel(overallHealthScore);
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Cost Savings Opportunity */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Potential Savings
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {stats.orphaned_savings > 0 ? `$${stats.orphaned_savings.toFixed(0)}/mo` : '$0/mo'}
-              </div>
-              <p className="text-xs text-gray-600">
-                {stats.orphaned_count || 0} idle resources detected
-              </p>
-            </div>
+          // Only show if there's at least one actionable insight
+          const showInsights = hasSavings || hasSecurityIssues || overallHealthScore < 100;
 
-            {/* Security Recommendation */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-orange-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Security Priority
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {stats.public_count || 0} issues
-              </div>
-              <p className="text-xs text-gray-600">
-                Public resources need review
-              </p>
-            </div>
+          if (!showInsights) return null;
 
-            {/* Resource Health */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Database className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-900">
-                  Overall Health
-                </span>
+          return (
+            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Quick Insights
+                </h3>
               </div>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {stats.compliance_stats?.total_issues === 0 ? 'Excellent' : stats.compliance_stats?.total_issues < 5 ? 'Good' : 'Needs Attention'}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Cost Savings Opportunity - only show if there are actual savings */}
+                {hasSavings && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Savings Opportunity
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                      ${stats.orphaned_savings.toFixed(0)}/mo
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {stats.orphaned_count} idle {stats.orphaned_count === 1 ? 'resource' : 'resources'} detected
+                    </p>
+                  </div>
+                )}
+
+                {/* Security Items - only show if there are actual security issues */}
+                {hasSecurityIssues && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Security Items
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-1">
+                      {(stats.unencrypted_count || 0) + (stats.public_count || 0)}
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {stats.unencrypted_count || 0} unencrypted, {stats.public_count || 0} public
+                    </p>
+                  </div>
+                )}
+
+                {/* Overall Health Score */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Overall Health
+                    </span>
+                  </div>
+                  <div className={`text-2xl font-bold ${healthLevel.color} mb-1`}>
+                    {overallHealthScore}/100
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {healthLevel.label} health score
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-gray-600">
-                {stats.total_resources > 0 ? Math.round(((stats.total_resources - (stats.compliance_stats?.total_issues || 0)) / stats.total_resources) * 100) : 100}% resources compliant
-              </p>
             </div>
-          </div>
-        </div>
+          );
+        })()
       )}
 
       {/* Cost Attribution Dashboard (Pro+ Feature) */}
@@ -747,13 +784,14 @@ export default function AWSResourcesPage() {
 
       {/* Cost Attribution Teaser for Free Users */}
       {!subscription.canViewCostAttribution && (
-        <UpgradePrompt
-          variant="card"
-          title="Cost Attribution by Team, Service & Environment"
-          description="See exactly which teams and services are driving AWS costs. Track production vs staging spending. Enable showback and chargeback for internal accountability."
-          requiredTier="pro"
-          feature="Available in Pro plan"
-          icon={DollarSign}
+        <CostAttributionTeaser
+          currentPlan={
+            subscription.canViewCostAttribution
+              ? 'pro'
+              : subscription.isFree
+              ? 'free'
+              : 'starter'
+          }
         />
       )}
 
@@ -1056,16 +1094,27 @@ export default function AWSResourcesPage() {
                           {(() => {
                             const resourceRisk = calculateResourceRisk(resource);
                             const daysExposed = resource.is_public ? calculateDaysExposed(resource.first_discovered_at) : 0;
+                            const getRiskSeverity = (): 'critical' | 'high' | 'medium' | 'low' => {
+                              if (resourceRisk >= 60) return 'critical';
+                              if (resourceRisk >= 40) return 'high';
+                              if (resourceRisk >= 20) return 'medium';
+                              return 'low';
+                            };
+                            const getRiskLabel = () => {
+                              if (resourceRisk >= 60) return 'Critical';
+                              if (resourceRisk >= 40) return 'High';
+                              if (resourceRisk >= 20) return 'Medium';
+                              return 'Low';
+                            };
                             return (
                               <div className="flex flex-col gap-1">
-                                <Badge
-                                  variant={resourceRisk >= 40 ? 'destructive' : resourceRisk >= 20 ? 'default' : 'secondary'}
-                                  className="text-xs w-fit"
-                                >
-                                  {resourceRisk >= 60 ? 'CRITICAL' : resourceRisk >= 40 ? 'High' : resourceRisk >= 20 ? 'Medium' : 'Low'}
-                                </Badge>
+                                <SeverityBadge
+                                  severity={getRiskSeverity()}
+                                  label={getRiskLabel()}
+                                  className="w-fit"
+                                />
                                 {resource.is_public && daysExposed > 0 && (
-                                  <span className="text-xs text-red-600 font-medium">
+                                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                                     {daysExposed}d exposed
                                   </span>
                                 )}
@@ -1079,25 +1128,26 @@ export default function AWSResourcesPage() {
                       </TableCell>
                       <TableCell>${(parseFloat(resource.estimated_monthly_cost) || 0).toFixed(2)}</TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-wrap">
                           {resource.is_encrypted ? (
-                            <Badge variant="secondary" className="text-xs">Encrypted</Badge>
+                            <SeverityBadge severity="success" label="Encrypted" />
                           ) : (
-                            <Badge variant="destructive" className="text-xs">Not Encrypted</Badge>
+                            <SeverityBadge severity="high" label="Unencrypted" />
                           )}
                           {resource.is_public && (
-                            <Badge variant="destructive" className="text-xs">Public</Badge>
+                            <SeverityBadge severity="critical" label="Public" />
                           )}
                         </div>
                       </TableCell>
                       {subscription.canViewCompliance && (
                         <TableCell>
                           {resource.compliance_issues && resource.compliance_issues.length > 0 ? (
-                            <Badge variant={getSeverityColor(resource.compliance_issues[0].severity)}>
-                              {resource.compliance_issues.length} {resource.compliance_issues.length === 1 ? 'issue' : 'issues'}
-                            </Badge>
+                            <SeverityBadge
+                              severity={resource.compliance_issues[0].severity as 'critical' | 'high' | 'medium' | 'low'}
+                              label={`${resource.compliance_issues.length} ${resource.compliance_issues.length === 1 ? 'issue' : 'issues'}`}
+                            />
                           ) : (
-                            <Badge variant="secondary">Compliant</Badge>
+                            <SeverityBadge severity="success" label="Compliant" />
                           )}
                         </TableCell>
                       )}
