@@ -11,6 +11,7 @@ import awsRoutes from './aws.routes';
 import costRecommendationsRoutes from './cost-recommendations.routes';
 import doraMetricsRoutes from './dora-metrics.routes';
 import alertHistoryRoutes from './alert-history.routes';
+import alertConfigRoutes from './alert-config.routes';
 import awsResourcesRoutes from './awsResources.routes';
 import logsRoutes from './logs.routes';
 import auditLogsRoutes from './auditLogs.routes';
@@ -38,6 +39,7 @@ router.use('/aws-resources', awsResourcesRoutes);
 router.use('/cost-recommendations', costRecommendationsRoutes);
 router.use('/metrics/dora', doraMetricsRoutes);
 router.use('/alerts', alertHistoryRoutes);
+router.use('/alert-config', alertConfigRoutes);
 router.use('/audit-logs', auditLogsRoutes);
 router.use('/stripe', stripeRoutes);
 router.use('/onboarding', onboardingRoutes);
@@ -64,6 +66,7 @@ router.get('/', (req, res) => {
       costRecommendations: '/api/cost-recommendations',
       doraMetrics: '/api/metrics/dora',
       alerts: '/api/alerts',
+      alertConfig: '/api/alert-config',
       auditLogs: '/api/audit-logs',
       stripe: '/api/stripe',
       onboarding: '/api/onboarding',

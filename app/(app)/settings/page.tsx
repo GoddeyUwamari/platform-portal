@@ -9,7 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Lock, Globe, Palette, CheckCircle2 } from 'lucide-react';
+import { Bell, Lock, Globe, Palette, CheckCircle2, Mail, MessageSquare, Webhook } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const [showSuccess, setShowSuccess] = useState(false);
@@ -69,6 +70,10 @@ export default function SettingsPage() {
             <TabsTrigger value="security">
               <Lock className="w-4 h-4 mr-2" />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="alerts">
+              <Bell className="w-4 h-4 mr-2" />
+              Alerts
             </TabsTrigger>
           </TabsList>
 
@@ -256,6 +261,52 @@ export default function SettingsPage() {
                     <Button variant="outline">
                       View Sessions
                     </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Alerts Tab */}
+          <TabsContent value="alerts">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Alert Configuration</CardTitle>
+                <CardDescription>
+                  Configure email, Slack, and webhook notifications for monitoring alerts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Set up advanced alerting channels to receive notifications about critical events,
+                    resource usage, and system health.
+                  </p>
+
+                  <div className="flex gap-3">
+                    <Link href="/settings/alerts">
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        Configure Alert Channels →
+                      </Button>
+                    </Link>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-sm text-gray-900 mb-2">Available Channels:</h4>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-blue-600" />
+                        Email - SMTP configuration with multiple recipients
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-purple-600" />
+                        Slack - Webhook integration for team channels
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Webhook className="w-4 h-4 text-green-600" />
+                        Webhooks - Custom endpoint integrations
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>
